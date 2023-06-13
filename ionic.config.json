@@ -1,0 +1,7 @@
+{
+  "name": "AirGuardian",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
