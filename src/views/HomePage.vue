@@ -1,56 +1,60 @@
 <template>
-  <ion-page>
-    <ion-header :translucent="true">
-      <ion-toolbar>
-        <ion-title>Blank</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Blank</ion-title>
-        </ion-toolbar>
-      </ion-header>
-
-      <div id="container">
-        <strong>Ready to create an app?</strong>
-        <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-      </div>
-    </ion-content>
-  </ion-page>
+  <div class="background" :style="{ backgroundImage: `url(${backgroundImage})` }">
+  </div>
 </template>
 
-<script setup lang="ts">
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+<script lang="ts">
+import { defineComponent, watch, ref, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+import { useBluetooth } from '../composables/useBluetooth';
+import goodAir from '../assets/GuteLuft.gif';
+import moderateAir from '../assets/MaeßigeLuft.gif';
+import badAir from '../assets/SchlechteLuft.gif';
+
+console.log("Startseite beginn");
+
+export default defineComponent({
+  setup() {
+    console.log("Startseite setup erreicht");
+    const router = useRouter();
+    const { co2Value } = useBluetooth();  // CO2-Wert aus useBluetooth importieren  
+    const backgroundImage = ref(goodAir); // Initialer Wert
+    console.log("Startseite GIF sollte initialisiert sein");
+
+    watch(co2Value, (newValue) => {
+      nextTick().then(() => {
+        if (newValue !== null) {
+          if (newValue < 1000) {
+            backgroundImage.value = goodAir;
+          } else if (newValue < 2000) {
+            backgroundImage.value = moderateAir;
+          } else {
+            backgroundImage.value = badAir;
+          }
+        }
+      })
+    });
+
+      const goToDashboard = () => {
+        router.push({ name: 'Dashboard' });
+      };
+
+      return {
+        goToDashboard,
+        backgroundImage,
+        co2Value
+      };
+    },
+})
 </script>
 
 <style scoped>
-#container {
-  text-align: center;
-  
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
-}
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  
-  color: #8c8c8c;
-  
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
+.background {
+  background-size: cover;
+  background-position: center;
+  transition: background-image 3s ease-in-out;
+  width: 100vw;
+  height: 100vh;
 }
 </style>
+

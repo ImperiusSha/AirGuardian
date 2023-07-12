@@ -1,6 +1,12 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
+import { Chart, LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale } from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import 'bootstrap/dist/css/bootstrap.css';
+
+Chart.register(LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale);
+
 
 import { IonicVue } from '@ionic/vue';
 
@@ -23,9 +29,9 @@ import '@ionic/vue/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
-const app = createApp(App)
-  .use(IonicVue)
-  .use(router);
+const app = createApp(App);
+app.use(IonicVue);
+app.use(router);
   
 router.isReady().then(() => {
   app.mount('#app');

@@ -1,6 +1,45 @@
 /* Ionic Variables and Theming. For more info, please see:
 http://ionicframework.com/docs/theming/ */
 
+.status-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Schatten hinzufügen */
+}
+
+.status-indicator.is-connected {
+  background-color: green;
+  border: 2px solid darkgreen; /* 3D-Effekt hinzufügen */
+}
+
+.status-indicator:not(.is-connected) {
+  background-color: red;
+  border: 2px solid darkred; /* 3D-Effekt hinzufügen */
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+      transform: scale(0.95);
+      opacity: 0.7;
+  }
+  70% {
+      transform: scale(1);
+      opacity: 0.7;
+  }
+  100% {
+      transform: scale(0.95);
+      opacity: 1;
+  }
+}
+
+
+
+
 /** Ionic CSS Variables **/
 :root {
   /** primary **/
