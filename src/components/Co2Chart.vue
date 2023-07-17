@@ -64,6 +64,7 @@ export default defineComponent({
         const showChart = ref(true);
         const maxY = ref(1000);
         const showModal = ref(false);
+        let lastAddedValue: null = null;
 
         const chartData = ref<LocalChartData>({
             labels: [],
@@ -95,16 +96,29 @@ export default defineComponent({
                     chartData.value.labels.shift();
                     chartData.value.datasets[0].data.shift();
                 }
+            } else if (store.state.co2Values.length > 0) {
+                const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
+                initializeChartData(latestCo2Value);
             }
         };
 
+
         onMounted(() => {
-            const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
-            initializeChartData(latestCo2Value);
-            setInterval(() => {
+            if (store.state.co2Values.length > 0) {
                 const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
                 initializeChartData(latestCo2Value);
-            }, 5000); // alle 5 Sekunde
+                lastAddedValue = latestCo2Value;
+            }
+            setInterval(() => {
+                if (store.state.co2Values.length > 0) {
+                    const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
+                    // Überprüfung, ob der neueste Wert bereits hinzugefügt wurde
+                    if (latestCo2Value !== lastAddedValue) {
+                        initializeChartData(latestCo2Value);
+                        lastAddedValue = latestCo2Value;
+                    }
+                }
+            }, 5000); // Überprüfung alle 5 Sekunden
         });
 
 
