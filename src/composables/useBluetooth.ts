@@ -1,6 +1,8 @@
 import { BleClient, BleService } from '@capacitor-community/bluetooth-le';
 import { ref, onMounted } from 'vue';
 import { co2Value, pm10Value, tempValue } from './values';
+import { useStore } from 'vuex'
+
 
 
 let deviceId = '';
@@ -60,17 +62,14 @@ const SERVICES = [
 
 export function useBluetooth() {
     let initialAutoConnect = false;
-    try {
-        initialAutoConnect = localStorage.getItem('autoConnect') === 'true';
-    } catch (error) {
-        console.error('Fehler beim Laden von autoConnect aus dem LocalStorage:', error);
-    }
     const autoConnect = ref(initialAutoConnect);
     localStorage.getItem('autoConnect') === 'true';
     const isConnected = ref(false);
     const services = ref<BleService[]>([]);
     const decoder = new TextDecoder('utf-8');
     let dataString = '';
+    const store = useStore();
+
 
     const connectToSensor = async () => {
         try {
@@ -103,7 +102,8 @@ export function useBluetooth() {
                             dataString = decoder.decode(notifValue.buffer);
                             console.log('Daten als String:', dataString);
                             const value = parseFloat(dataString);
-                            co2Value.value = value;
+                            store.commit('addCo2Value', value);
+                            console.log("Aktuelle Werte im Vuex-Store: " + store.state.co2Values);
                         }
                     );
                 } catch (error) {
@@ -179,10 +179,9 @@ export function useBluetooth() {
 
     // Zustand der automatischen Verbindung umschalten
     const toggleAutoConnect = () => {
-        autoConnect.value = !autoConnect.value;
         localStorage.setItem('autoConnect', autoConnect.value.toString());
         console.log('autoConnect toggled, new value:', autoConnect.value);
     }
 
-    return { isConnected, connectToSensor, disconnectFromSensor, co2Value, pm10Value, toggleAutoConnect, autoConnect };
+    return { isConnected, connectToSensor, disconnectFromSensor, pm10Value, toggleAutoConnect, autoConnect };
 }

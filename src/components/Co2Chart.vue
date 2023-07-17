@@ -29,10 +29,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, ref, watch, computed } from 'vue';
-import { useBluetooth } from '../composables/useBluetooth';
+import { defineComponent, nextTick, ref, watch, computed, onMounted } from 'vue';
 import { LineChart } from 'vue-chart-3';
 import { Filler, Chart as ChartJS } from 'chart.js';
+import { useStore } from 'vuex';
 
 ChartJS.register(Filler);
 
@@ -45,7 +45,7 @@ interface LocalChartData {
         label: string;
         data: number[];
         borderColor: string;
-        backgroundColor: string; 
+        backgroundColor: string;
         fill: boolean;
     }[];
 }
@@ -60,50 +60,51 @@ export default defineComponent({
     // eines Objektes, da dieses reaktiv gemacht wurde
     setup() {
         console.log("Im Setup von defineComponent_Co2Chart angekommen.");
-        const { co2Value } = useBluetooth();  // CO2-Wert aus useBluetooth importieren  
-        console.log("co2Value von useBluetooth() erhalten." + co2Value);
+        const store = useStore();
         const showChart = ref(true);
         const maxY = ref(1000);
-        const showModal = ref(false); 
+        const showModal = ref(false);
+
         const chartData = ref<LocalChartData>({
             labels: [],
             datasets: [
                 {
                     label: 'CO2',
-                    data: [],
+                    data: store.state.co2Values,
                     borderColor: 'rgba(115, 115, 115)',
-                    backgroundColor: 'rgba(168,168,168,0.2)',  
+                    backgroundColor: 'rgba(168,168,168,0.2)',
                     fill: true,
                 },
             ],
         });
-        console.log("Hier komm ich noch an");
-        // Watch-Funktion zur Überwachung von Änderungen an co2Value
-        watch(co2Value, (newVal) => {
-            console.log("Komme ich hier an???");
-            nextTick().then(() => {
-                if (newVal !== null) {  
-                    let currentTime = new Date();
-                    chartData.value.labels.push(currentTime.toISOString());
-                    chartData.value.datasets[0].data.push(newVal);
-                    console.log("Neuer CO2-Wert erhalten um " + currentTime + "--- Mit dem Wert: " + newVal);
 
-                    
-                    if (newVal > maxY.value) {
-                        if (newVal <= 2000) {
-                            maxY.value = 2000;
-                        } else {
-                            maxY.value = 5000;
-                        }
-                    }
-                    // Überprüfen, ob die Länge des Arrays 30 überschreitet und ggf. das erste Element entfernen
-                    if (chartData.value.labels.length > 30) {
-                        chartData.value.labels.shift();
-                        chartData.value.datasets[0].data.shift();
-                    }
+        const initializeChartData = (newValue: number | null) => {
+            if (newValue !== null) {
+                let currentTime = new Date();
+                chartData.value.labels.push(currentTime.toISOString());
+                chartData.value.datasets[0].data.push(newValue);
 
+                if (newValue > maxY.value) {
+                    if (newValue <= 2000) {
+                        maxY.value = 2000;
+                    } else {
+                        maxY.value = 5000;
+                    }
                 }
-            })
+                if (chartData.value.labels.length > 30) {
+                    chartData.value.labels.shift();
+                    chartData.value.datasets[0].data.shift();
+                }
+            }
+        };
+
+        onMounted(() => {
+            const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
+            initializeChartData(latestCo2Value);
+            setInterval(() => {
+                const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
+                initializeChartData(latestCo2Value);
+            }, 5000); // alle 5 Sekunde
         });
 
 
@@ -126,7 +127,7 @@ export default defineComponent({
                         display: true,
                         unit: 'second',
                         displayFormats: {
-                            second: 'hh:mm:ss'
+                            second: 'HH:mm:ss'
                         }
                     },
                     ticks: {
@@ -141,7 +142,7 @@ export default defineComponent({
                 y: {
                     display: true,
                     beginAtZero: true,
-                    title: { 
+                    title: {
                         display: true,
                         text: 'ppm'
                     },
