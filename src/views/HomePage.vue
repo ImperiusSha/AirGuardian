@@ -6,7 +6,7 @@
 <script lang="ts">
 import { defineComponent, watch, ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { useBluetooth } from '../composables/useBluetooth';
+import { useStore } from 'vuex';
 import goodAir from '../assets/GuteLuft.gif';
 import moderateAir from '../assets/MaeßigeLuft.gif';
 import badAir from '../assets/SchlechteLuft.gif';
@@ -17,11 +17,11 @@ export default defineComponent({
   setup() {
     console.log("Startseite setup erreicht");
     const router = useRouter();
-    const { co2Value } = useBluetooth();  // CO2-Wert aus useBluetooth importieren  
+    const store = useStore();
     const backgroundImage = ref(goodAir); // Initialer Wert
     console.log("Startseite GIF sollte initialisiert sein");
 
-    watch(co2Value, (newValue) => {
+    watch(store.state.co2Values, (newValue: number | null) => {
       nextTick().then(() => {
         if (newValue !== null) {
           if (newValue < 1000) {
@@ -41,8 +41,7 @@ export default defineComponent({
 
       return {
         goToDashboard,
-        backgroundImage,
-        co2Value
+        backgroundImage
       };
     },
 })
