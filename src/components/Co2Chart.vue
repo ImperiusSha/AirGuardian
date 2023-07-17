@@ -64,7 +64,7 @@ export default defineComponent({
         const showChart = ref(true);
         const maxY = ref(1000);
         const showModal = ref(false);
-        let lastAddedValue: null = null;
+        let lastAddedIndex = -1; // Speichert den Index des zuletzt hinzugefügten Wertes
 
         const chartData = ref<LocalChartData>({
             labels: [],
@@ -79,46 +79,31 @@ export default defineComponent({
             ],
         });
 
-        const initializeChartData = (newValue: number | null) => {
-            if (newValue !== null) {
-                let currentTime = new Date();
-                chartData.value.labels.push(currentTime.toISOString());
-                chartData.value.datasets[0].data.push(newValue);
-
-                if (newValue > maxY.value) {
-                    if (newValue <= 2000) {
-                        maxY.value = 2000;
-                    } else {
-                        maxY.value = 5000;
-                    }
+        const initializeChartData = () => {
+            chartData.value.labels = store.state.co2Values.map((entry: { timestamp: any; }) => entry.timestamp);
+            chartData.value.datasets[0].data = store.state.co2Values.map((entry: { value: any; }) => entry.value);
+            const maxCo2Value = Math.max(...chartData.value.datasets[0].data);
+            if (maxCo2Value > maxY.value) {
+                if (maxCo2Value <= 2000) {
+                    maxY.value = 2000;
+                } else {
+                    maxY.value = 5000;
                 }
-                if (chartData.value.labels.length > 30) {
-                    chartData.value.labels.shift();
-                    chartData.value.datasets[0].data.shift();
-                }
-            } else if (store.state.co2Values.length > 0) {
-                const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
-                initializeChartData(latestCo2Value);
             }
+            // if (chartData.value.labels.length > 30) {
+            //     chartData.value.labels.shift();
+            //     chartData.value.datasets[0].data.shift();
+            // }
         };
 
 
         onMounted(() => {
-            if (store.state.co2Values.length > 0) {
-                const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
-                initializeChartData(latestCo2Value);
-                lastAddedValue = latestCo2Value;
-            }
+            initializeChartData();
             setInterval(() => {
-                if (store.state.co2Values.length > 0) {
-                    const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1];
-                    // Überprüfung, ob der neueste Wert bereits hinzugefügt wurde
-                    if (latestCo2Value !== lastAddedValue) {
-                        initializeChartData(latestCo2Value);
-                        lastAddedValue = latestCo2Value;
-                    }
+                if (store.state.co2Values.length > chartData.value.datasets[0].data.length) {
+                    initializeChartData();
                 }
-            }, 5000); // Überprüfung alle 5 Sekunden
+            }, 5000); // alle 5 Sekunde
         });
 
 
@@ -169,21 +154,23 @@ export default defineComponent({
                     grid: {
                         color: function (context: { tick: { value: number; }; }) {
                             if (context.tick.value == 400) {
-                                return 'rgba(150,220,0,0.4)';
+                                return 'rgba(150,220,0, 0.4)';
                             } else if (context.tick.value == 1000) {
                                 return 'rgba(220,120,0, 0.4)';
                             } else if (context.tick.value == 2000) {
                                 return 'rgba(270,20,0, 0.4)';
+                            } else if (context.tick.value == 5000) {
+                                return 'rgba(120,10,10, 0.8)';
                             }
                             return 'rgba(0,0,0,0.1)';
                         },
                         lineWidth: function (context: { tick: { value: number; }; }) {
-                            if (context.tick.value == 400 || context.tick.value == 1000 || context.tick.value == 2000) {
+                            if (context.tick.value == 400 || context.tick.value == 1000 || context.tick.value == 2000 || context.tick.value == 5000) {
                                 return 2;
                             }
                             return 1;
                         },
-                        drawBorder: false,
+                        drawBorder: true,
                         drawOnChartArea: true,
                         drawTicks: false,
                     },
