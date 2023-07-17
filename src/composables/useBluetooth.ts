@@ -103,6 +103,7 @@ export function useBluetooth() {
                             console.log('Daten als String:', dataString);
                             const value = parseFloat(dataString);
                             store.commit('addCo2Value', value);
+                            store.commit('removeEmptyAndDuplicate');
                             console.log("Aktuelle Werte im Vuex-Store: " + store.state.co2Values);
                         }
                     );
