@@ -16,7 +16,7 @@ export default createStore({
         // Entfernt doppelt Einträge durch die Verwendung von newSet()
         // Filtert leere Werte durch die Verwendung von filter()
         removeEmptyAndDuplicate(state) {
-            state.co2Values = [...new Set(state.co2Values)].filter(value => value !== null && value !== undefined && value !== '');
+            state.co2Values = [...new Set(state.co2Values)].filter(value => value !== null && value !== undefined && value.toString(value) !== '');
         },
         addPm10Value(state, value: number) {
             state.pm10Values.push(value);
