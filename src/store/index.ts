@@ -17,6 +17,7 @@ export default createStore({
                     timestamp: new Date().toISOString(),
                     value: value,
                 });
+                // Begrenzung auf maximal 15 Werte im Diagramm
                 if (state.co2Values.length > 15) {
                     state.co2Values.shift();
                 }

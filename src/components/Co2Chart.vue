@@ -66,7 +66,6 @@ export default defineComponent({
         const maxY = ref(1000);
         const showModal = ref(false);
         let lastAddedValue: null = null;
-        let lastAddedIndex = -1; // Speichert den Index des zuletzt hinzugefügten Wertes
 
         const chartData = ref<LocalChartData>({
             labels: [],
@@ -74,14 +73,15 @@ export default defineComponent({
                 {
                     label: 'CO2',
                     data: store.state.co2Values,
-                    borderColor: 'rgba(115, 115, 115)',
-                    backgroundColor: 'rgba(168,168,168,0.2)',
+                    borderColor: 'rgba(175,150,20,0.6)',
+                    backgroundColor: 'rgba(175,192,92,0.2)',
                     fill: true,
                 },
             ],
         });
 
-        const initializeChartData = (newValue: number | null) => {
+
+        const initializeChartData = () => {
             chartData.value.labels = store.state.co2Values.map((entry: { timestamp: any; }) => entry.timestamp);
             chartData.value.datasets[0].data = store.state.co2Values.map((entry: { value: any; }) => entry.value);
             const maxCo2Value = Math.max(...chartData.value.datasets[0].data);
@@ -89,51 +89,44 @@ export default defineComponent({
                 if (maxCo2Value <= 2000) {
                     maxY.value = 2000;
                 } else {
-                    maxY.value = 5000;
+                    maxY.value = 3000;
                 }
             }
 
-            if (chartData.value.labels.length > 30) {
-                chartData.value.labels.shift();
-                chartData.value.datasets[0].data.shift();
-            }
+            // if (chartData.value.labels.length > 30) {
+            //     chartData.value.labels.shift();
+            //     chartData.value.datasets[0].data.shift();
+            // }
         };
 
 
         onMounted(() => {
             setInterval(() => {
-                if (store.state.co2Values.length > 0 && store.state.co2Values.length - 1 !== lastAddedIndex) {
-                    const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1]; // Überprüfung, ob der neueste Wert bereits hinzugefügt wurde
-                    if (latestCo2Value !== lastAddedValue) {
-                        initializeChartData(latestCo2Value);
-                        lastAddedValue = latestCo2Value;
-                    }
+                if (store.state.co2Values.length > 0 && store.state.co2Values[store.state.co2Values.length - 1].value !== lastAddedValue) {
+                    lastAddedValue = store.state.co2Values[store.state.co2Values.length - 1].value;
+                    initializeChartData();
                 }
             }, 5000); // alle 5 Sekunde
         });
 
-
         const chartOptions = computed(() => ({
-            type: 'line',
             responsive: true,
-            options: {
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'CO2-Diagramm',
-                    },
-                    datalabels: {
-                        color: '#000000',
-                        backgroundColor: 'rgba(255,255,255,0.8)',  // Weißer Hintergrund mit etwas Transparenz
-                        borderColor: 'rgba(0,0,0,0.5)',  // Graue Randfarbe
-                        borderRadius: 4,  // Abgerundete Ecken
-                        borderWidth: 1,  // Breite der Randlinie
-                        anchor: 'center',  // Positioniert das Label in der Mitte des Datenpunkts
-                        align: 'center',  // Zentriert das Label vertikal im Verhältnis zum Datenpunkt
-                        offset: -10,  // Verschiebt das Label 10 Pixel nach oben
-                        formatter: (value: any, ctx: { dataset: { data: { [x: string]: any; }; }; dataIndex: string | number; }) => {
-                            return ctx.dataset.data[ctx.dataIndex];
-                        },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'CO2-Diagramm',
+                },
+                datalabels: {
+                    color: '#000000',
+                    backgroundColor: 'rgba(255,255,255,0.8)',  // Weißer Hintergrund mit etwas Transparenz
+                    borderColor: 'rgba(0,0,0,0.5)',  // Graue Randfarbe
+                    borderRadius: 4,  // Abgerundete Ecken
+                    borderWidth: 1,  // Breite der Randlinie
+                    anchor: 'start',  // Positioniert das Label in der Mitte des Datenpunkts
+                    align: 'top',  // Zentriert das Label vertikal im Verhältnis zum Datenpunkt
+                    offset: 10,  // Verschiebt das Label 10 Pixel nach oben
+                    formatter: (value: any, ctx: { dataset: { data: { [x: string]: any; }; }; dataIndex: string | number; }) => {
+                        return ctx.dataset.data[ctx.dataIndex];
                     },
                 },
             },
@@ -177,8 +170,8 @@ export default defineComponent({
                             } else if (context.tick.value == 1000) {
                                 return 'rgba(220,120,0, 0.4)';
                             } else if (context.tick.value == 2000) {
-                                return 'rgba(270,20,0, 0.4)';
-                            } else if (context.tick.value == 5000) {
+                                return 'rgba(255,20,0, 0.4)';
+                            } else if (context.tick.value == 3000) {
                                 return 'rgba(120,10,10, 0.8)';
                             }
                             return 'rgba(0,0,0,0.1)';
@@ -203,6 +196,7 @@ export default defineComponent({
                 }
             }
         }));
+
 
         return {
             chartData,
