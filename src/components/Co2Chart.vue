@@ -29,12 +29,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, ref, watch, computed, onMounted } from 'vue';
+import { defineComponent, ref, computed, onMounted } from 'vue';
 import { LineChart } from 'vue-chart-3';
-import { Filler, Chart as ChartJS } from 'chart.js';
+import { Filler, Chart as ChartJS, LineController, LineElement, LinearScale, PointElement, Title, Tooltip } from 'chart.js';
 import { useStore } from 'vuex';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-ChartJS.register(Filler);
+ChartJS.register(Filler, LineController, LineElement, PointElement, LinearScale, Title, Tooltip, ChartDataLabels);
 
 // Benötigtes Interface, um Struktur von chartData zu repräsentieren
 // Wenn nicht vorhanden, interpretiert TS Werte als "never", da es
@@ -64,6 +65,7 @@ export default defineComponent({
         const showChart = ref(true);
         const maxY = ref(1000);
         const showModal = ref(false);
+        let lastAddedValue: null = null;
         let lastAddedIndex = -1; // Speichert den Index des zuletzt hinzugefügten Wertes
 
         const chartData = ref<LocalChartData>({
@@ -79,7 +81,7 @@ export default defineComponent({
             ],
         });
 
-        const initializeChartData = () => {
+        const initializeChartData = (newValue: number | null) => {
             chartData.value.labels = store.state.co2Values.map((entry: { timestamp: any; }) => entry.timestamp);
             chartData.value.datasets[0].data = store.state.co2Values.map((entry: { value: any; }) => entry.value);
             const maxCo2Value = Math.max(...chartData.value.datasets[0].data);
@@ -90,18 +92,22 @@ export default defineComponent({
                     maxY.value = 5000;
                 }
             }
-            // if (chartData.value.labels.length > 30) {
-            //     chartData.value.labels.shift();
-            //     chartData.value.datasets[0].data.shift();
-            // }
+
+            if (chartData.value.labels.length > 30) {
+                chartData.value.labels.shift();
+                chartData.value.datasets[0].data.shift();
+            }
         };
 
 
         onMounted(() => {
-            initializeChartData();
             setInterval(() => {
-                if (store.state.co2Values.length > chartData.value.datasets[0].data.length) {
-                    initializeChartData();
+                if (store.state.co2Values.length > 0 && store.state.co2Values.length - 1 !== lastAddedIndex) {
+                    const latestCo2Value = store.state.co2Values[store.state.co2Values.length - 1]; // Überprüfung, ob der neueste Wert bereits hinzugefügt wurde
+                    if (latestCo2Value !== lastAddedValue) {
+                        initializeChartData(latestCo2Value);
+                        lastAddedValue = latestCo2Value;
+                    }
                 }
             }, 5000); // alle 5 Sekunde
         });
@@ -115,8 +121,21 @@ export default defineComponent({
                     title: {
                         display: true,
                         text: 'CO2-Diagramm',
-                    }
-                }
+                    },
+                    datalabels: {
+                        color: '#000000',
+                        backgroundColor: 'rgba(255,255,255,0.8)',  // Weißer Hintergrund mit etwas Transparenz
+                        borderColor: 'rgba(0,0,0,0.5)',  // Graue Randfarbe
+                        borderRadius: 4,  // Abgerundete Ecken
+                        borderWidth: 1,  // Breite der Randlinie
+                        anchor: 'center',  // Positioniert das Label in der Mitte des Datenpunkts
+                        align: 'center',  // Zentriert das Label vertikal im Verhältnis zum Datenpunkt
+                        offset: -10,  // Verschiebt das Label 10 Pixel nach oben
+                        formatter: (value: any, ctx: { dataset: { data: { [x: string]: any; }; }; dataIndex: string | number; }) => {
+                            return ctx.dataset.data[ctx.dataIndex];
+                        },
+                    },
+                },
             },
             scales: {
                 x: {
@@ -190,7 +209,7 @@ export default defineComponent({
             showModal,
             showChart,
             datacollection: chartData,
-            chartOptions,
+            chartOptions
         };
     }
 })

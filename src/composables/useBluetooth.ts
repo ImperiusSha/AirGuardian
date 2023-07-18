@@ -1,6 +1,6 @@
 import { BleClient, BleService } from '@capacitor-community/bluetooth-le';
 import { ref, onMounted } from 'vue';
-import { co2Value, pm10Value, tempValue } from './values';
+import { pm10Value, tempValue } from './values';
 import { useStore } from 'vuex'
 
 

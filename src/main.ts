@@ -4,9 +4,10 @@ import router from './router';
 import store from './store'; 
 import { Chart, LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'bootstrap/dist/css/bootstrap.css';
 
-Chart.register(LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale);
+Chart.register(ChartDataLabels, LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale);
 
 import { IonicVue } from '@ionic/vue';
 

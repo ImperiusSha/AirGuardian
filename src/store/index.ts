@@ -1,4 +1,3 @@
-
 // store/index.ts
 
 import { createStore } from 'vuex'
@@ -11,12 +10,16 @@ export default createStore({
     },
     mutations: {
         addCo2Value(state, value: number) {
-            state.co2Values.push({
-                timestamp: new Date().toISOString(),
-                value: value,
-            });
-            if (state.co2Values.length > 15){
-                state.co2Values.shift();
+            // Prüfen, ob bereits ein Element mit dem gleichen Zeitstempel vorhanden ist
+            // Prüfen, ob vorheriges Element den gleichen Wert hat
+            if (state.co2Values.length === 0 || state.co2Values[state.co2Values.length - 1].value !== value) {
+                state.co2Values.push({
+                    timestamp: new Date().toISOString(),
+                    value: value,
+                });
+                if (state.co2Values.length > 15) {
+                    state.co2Values.shift();
+                }
             }
         },
         // Entfernt doppelt Einträge durch die Verwendung von newSet()
