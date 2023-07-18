@@ -85,18 +85,16 @@ export default defineComponent({
             chartData.value.labels = store.state.co2Values.map((entry: { timestamp: any; }) => entry.timestamp);
             chartData.value.datasets[0].data = store.state.co2Values.map((entry: { value: any; }) => entry.value);
             const maxCo2Value = Math.max(...chartData.value.datasets[0].data);
-            if (maxCo2Value > maxY.value) {
-                if (maxCo2Value <= 2000) {
-                    maxY.value = 2000;
-                } else {
-                    maxY.value = 3000;
-                }
-            }
 
-            // if (chartData.value.labels.length > 30) {
-            //     chartData.value.labels.shift();
-            //     chartData.value.datasets[0].data.shift();
-            // }
+            if (maxCo2Value <= 1000) {
+                maxY.value = 1000;
+            } else if (maxCo2Value > 1000 && maxCo2Value <= 2000) {
+                maxY.value = 2000;
+            } else if (maxCo2Value > 2000 && maxCo2Value <= 3000) {
+                maxY.value = 3000;
+            } else if (maxCo2Value > 3000) {
+                maxY.value = maxCo2Value;  // Optional: Wenn der CO2-Wert 3000 übersteigt, passt sich das Diagramm entsprechend an.
+            }
         };
 
 
