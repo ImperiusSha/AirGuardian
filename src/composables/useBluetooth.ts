@@ -1,6 +1,6 @@
 import { BleClient, BleService } from '@capacitor-community/bluetooth-le';
 import { ref, onMounted } from 'vue';
-import { pm10Value, tempValue } from './values';
+import { tempValue } from './values';
 import { useStore } from 'vuex'
 
 
@@ -37,6 +37,21 @@ const PM10_SERVICE = {
     ]
 };
 
+const PM25_SERVICE = {
+    uuid: '7C97BB04-3D69-47A2-83D9-485ECFFB58D1',
+    characteristics: [
+        {
+            uuid: 'e46685f3-2b2c-4097-a7d2-b1898c95950f',
+            properties: { notify: true, broadcast: true },
+            descriptors: [
+                {
+                    uuid: '8e71c286-2681-4e1b-be54-3bd27f1d683d',
+                }
+            ]
+        }
+    ]
+};
+
 const TEMPERATURE_SERVICE = {
     uuid: '7C97BB04-3D69-47A2-83D9-485ECFFB58D1',
     characteristics: [
@@ -56,6 +71,7 @@ const TEMPERATURE_SERVICE = {
 const SERVICES = [
     CO2_SERVICE,
     PM10_SERVICE,
+    PM25_SERVICE,
     TEMPERATURE_SERVICE
 ];
 
@@ -124,15 +140,40 @@ export function useBluetooth() {
                     PM10_SERVICE.uuid,
                     pm10Characteristic.uuid,
                     (notifValue) => {
-                        console.log('PM10 Benachrichtigung erhalten:');
+                        console.log('PM10_Benachrichtigung erhalten:');
                         dataString = decoder.decode(notifValue.buffer);
                         console.log('Daten als String:', dataString);
                         const value = parseFloat(dataString);
-                        pm10Value.value = value;
+                        store.commit('addPM10Value', value);
+                        store.commit('removeEmptyAndDuplicate');
+                        console.log("Aktuelle Werte im Vuex-Store: " + store.state.pm10Values);
                     }
                 );
             } else {
                 console.error("PM10 Charakteristik nicht gefunden");
+            }
+
+            const pm25Characteristic = PM25_SERVICE.characteristics.find(
+                (c) => c.uuid === 'e46685f3-2b2c-4097-a7d2-b1898c95950f'
+            );
+            console.log('PM25_Characteristik?: ' + pm10Characteristic?.uuid);
+            if (pm25Characteristic) {
+                BleClient.startNotifications(
+                    device.deviceId,
+                    PM25_SERVICE.uuid,
+                    pm25Characteristic.uuid,
+                    (notifValue) => {
+                        console.log('PM25_Benachrichtigung erhalten:');
+                        dataString = decoder.decode(notifValue.buffer);
+                        console.log('Daten als String:', dataString);
+                        const value = parseFloat(dataString);
+                        store.commit('addPM25Value', value);
+                        store.commit('removeEmptyAndDuplicate');
+                        console.log("Aktuelle Werte im Vuex-Store: " + store.state.pm25Values);
+                    }
+                );
+            } else {
+                console.error("PM25 Charakteristik nicht gefunden");
             }
 
             const tempCharacteristic = TEMPERATURE_SERVICE.characteristics.find(
@@ -184,5 +225,5 @@ export function useBluetooth() {
         console.log('autoConnect toggled, new value:', autoConnect.value);
     }
 
-    return { isConnected, connectToSensor, disconnectFromSensor, pm10Value, toggleAutoConnect, autoConnect };
+    return { isConnected, connectToSensor, disconnectFromSensor, toggleAutoConnect, autoConnect };
 }

@@ -7,9 +7,9 @@
                 </div>
             </div>
 
-            <div class="outer" @click="showChart('pm10')">
-                <div class="inner" v-bind:class="{ open: currentChart === 'pm10' }">
-                    <label>{{ currentChart === 'pm10' ? '' : 'PM10' }}</label>
+            <div class="outer" @click="showChart('pm')">
+                <div class="inner" v-bind:class="{ open: currentChart === 'pm' }">
+                    <label>{{ currentChart === 'pm' ? '' : 'PM' }}</label>
                 </div>
             </div>
 
@@ -21,7 +21,7 @@
             
         </div>
         <Co2Chart v-if="currentChart === 'co2'" />
-        <PM10Chart v-if="currentChart === 'pm10'" />
+        <PmChart v-if="currentChart === 'pm'" />
         <TempChart v-if="currentChart === 'temp'" />
     </div>
 </template>
@@ -29,19 +29,20 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import Co2Chart from '../components/Co2Chart.vue';
-import Pm10Chart from '../components/Pm10Chart.vue';
+import PmChart from '../components/PmChart.vue';
 
 export default defineComponent({
     name: 'Dashboard',
     components: {
         Co2Chart,
-        Pm10Chart,
+        PmChart,
     },
     setup() {
         const currentChart = ref<string | null>(null);
 
         const showChart = (chart: string) => {
             currentChart.value = chart;
+            console.log("Aktuelles Diagramm: " + currentChart.value);
         }
 
         return {
