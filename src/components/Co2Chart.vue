@@ -3,11 +3,11 @@
     <div class="chart-container">
         <div class="info-container">
             <button v-if="showChart" @click="showModal = true">Wissenswertes zu den Co2-Werten</button>
-            <div v-if="showModal" class="modal">
-                <div class="modal-content">
+            <div v-if="showModal" class="modal" @click.self="closeModals">
+                <div class="modal-content" @click.stop>
                     <span class="close-button" @click="showModal = false">&times;</span>
                     <h2>Wissenswertes zu den CO2-Werten</h2>
-                    <p>PPM steht für "parts per million" (Teile pro Million).
+                    <p>PPM steht für <b>"parts per million"</b> (Teile pro Million).
                         Es wird verwendet, um die Konzentration von Substanzen in der Luft oder in Flüssigkeiten
                         auszudrücken.
                         Im Zusammenhang mit CO2 (Kohlendioxid) bezieht sich ppm auf die Anzahl der CO2-Moleküle pro einer
@@ -66,6 +66,9 @@ export default defineComponent({
         const maxY = ref(1000);
         const showModal = ref(false);
         let lastAddedValue: null = null;
+        const closeModals = () => {
+            showModal.value = false;
+        };
 
         const chartData = ref<LocalChartData>({
             labels: [],
@@ -104,7 +107,7 @@ export default defineComponent({
                     lastAddedValue = store.state.co2Values[store.state.co2Values.length - 1].value;
                     initializeChartData();
                 }
-            }, 5000); // alle 5 Sekunde
+            }, 10); // jede Sekunde
         });
 
         const chartOptions = computed(() => ({
@@ -186,19 +189,13 @@ export default defineComponent({
                     },
                 },
             },
-            elements: {
-                line: {
-                    borderColor: 'rgba(75,192,192,0.1)', // Halbtransparente Linie
-                    fill: true,
-                    backgroundColor: 'rgba(75,192,192,0.2)' // Transparenz für die Flächenfüllung
-                }
-            }
         }));
 
 
         return {
             chartData,
             showModal,
+            closeModals,
             showChart,
             datacollection: chartData,
             chartOptions
