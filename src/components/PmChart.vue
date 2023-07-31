@@ -292,25 +292,25 @@ export default defineComponent({
             const filePath = 'exportedData.csv';
 
             try {
-                // Schreiben Sie die Daten in die Datei
+                // Schreiben der Daten in eine Datei
                 await Filesystem.writeFile({
                     path: filePath,
                     data: fileContent,
-                    directory: Directory.Cache, // Verwenden Sie das Cache-Verzeichnis
+                    directory: Directory.Cache, // Android Limitierung, daher Verweisung auf Cache-Verzeichnis
                     encoding: Encoding.UTF8
                 });
 
-                // Holen Sie sich die tatsächliche URI der Datei
+                // Tatsächliche URI der Datei
                 const fileUri = await Filesystem.getUri({
                     path: filePath,
                     directory: Directory.Cache
                 });
 
-                // Teilen Sie die Datei
+                // Teilen der Datei
                 await Share.share({
                     title: 'Exported Data',
                     text: 'Here is the exported data from AirGuardian',
-                    url: fileUri.uri, // Verwenden Sie die tatsächliche URI
+                    url: fileUri.uri, 
                     dialogTitle: 'Share CSV data'
                 });
 
