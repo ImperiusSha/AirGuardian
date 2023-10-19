@@ -1,12 +1,14 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
+import store from './store'; 
 import { Chart, LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'bootstrap/dist/css/bootstrap.css';
 
-Chart.register(LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale);
 
+Chart.register(ChartDataLabels, LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale);
 
 import { IonicVue } from '@ionic/vue';
 
@@ -32,6 +34,7 @@ import './theme/variables.css';
 const app = createApp(App);
 app.use(IonicVue);
 app.use(router);
+app.use(store);
   
 router.isReady().then(() => {
   app.mount('#app');

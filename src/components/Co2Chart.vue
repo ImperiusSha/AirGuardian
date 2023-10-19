@@ -3,11 +3,11 @@
     <div class="chart-container">
         <div class="info-container">
             <button v-if="showChart" @click="showModal = true">Wissenswertes zu den Co2-Werten</button>
-            <div v-if="showModal" class="modal">
-                <div class="modal-content">
+            <div v-if="showModal" class="modal" @click.self="closeModals">
+                <div class="modal-content" @click.stop>
                     <span class="close-button" @click="showModal = false">&times;</span>
                     <h2>Wissenswertes zu den CO2-Werten</h2>
-                    <p>PPM steht für "parts per million" (Teile pro Million).
+                    <p>PPM steht für <b>"parts per million"</b> (Teile pro Million).
                         Es wird verwendet, um die Konzentration von Substanzen in der Luft oder in Flüssigkeiten
                         auszudrücken.
                         Im Zusammenhang mit CO2 (Kohlendioxid) bezieht sich ppm auf die Anzahl der CO2-Moleküle pro einer
@@ -29,12 +29,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, ref, watch, computed } from 'vue';
-import { useBluetooth } from '../composables/useBluetooth';
+import { defineComponent, ref, computed, onMounted } from 'vue';
 import { LineChart } from 'vue-chart-3';
-import { Filler, Chart as ChartJS } from 'chart.js';
+import { Filler, Chart as ChartJS, LineController, LineElement, LinearScale, PointElement, Title, Tooltip } from 'chart.js';
+import { useStore } from 'vuex';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-ChartJS.register(Filler);
+ChartJS.register(Filler, LineController, LineElement, PointElement, LinearScale, Title, Tooltip, ChartDataLabels);
 
 // Benötigtes Interface, um Struktur von chartData zu repräsentieren
 // Wenn nicht vorhanden, interpretiert TS Werte als "never", da es
@@ -45,7 +46,7 @@ interface LocalChartData {
         label: string;
         data: number[];
         borderColor: string;
-        backgroundColor: string; 
+        backgroundColor: string;
         fill: boolean;
     }[];
 }
@@ -60,63 +61,75 @@ export default defineComponent({
     // eines Objektes, da dieses reaktiv gemacht wurde
     setup() {
         console.log("Im Setup von defineComponent_Co2Chart angekommen.");
-        const { co2Value } = useBluetooth();  // CO2-Wert aus useBluetooth importieren  
-        console.log("co2Value von useBluetooth() erhalten." + co2Value);
+        const store = useStore();
         const showChart = ref(true);
         const maxY = ref(1000);
-        const showModal = ref(false); 
+        const showModal = ref(false);
+        let lastAddedValue: null = null;
+        const closeModals = () => {
+            showModal.value = false;
+        };
+
         const chartData = ref<LocalChartData>({
             labels: [],
             datasets: [
                 {
                     label: 'CO2',
-                    data: [],
-                    borderColor: 'rgba(115, 115, 115)',
-                    backgroundColor: 'rgba(168,168,168,0.2)',  
+                    data: store.state.co2Values,
+                    borderColor: 'rgba(175,150,20,0.6)',
+                    backgroundColor: 'rgba(175,192,92,0.2)',
                     fill: true,
                 },
             ],
         });
-        console.log("Hier komm ich noch an");
-        // Watch-Funktion zur Überwachung von Änderungen an co2Value
-        watch(co2Value, (newVal) => {
-            console.log("Komme ich hier an???");
-            nextTick().then(() => {
-                if (newVal !== null) {  
-                    let currentTime = new Date();
-                    chartData.value.labels.push(currentTime.toISOString());
-                    chartData.value.datasets[0].data.push(newVal);
-                    console.log("Neuer CO2-Wert erhalten um " + currentTime + "--- Mit dem Wert: " + newVal);
 
-                    
-                    if (newVal > maxY.value) {
-                        if (newVal <= 2000) {
-                            maxY.value = 2000;
-                        } else {
-                            maxY.value = 5000;
-                        }
-                    }
-                    // Überprüfen, ob die Länge des Arrays 30 überschreitet und ggf. das erste Element entfernen
-                    if (chartData.value.labels.length > 30) {
-                        chartData.value.labels.shift();
-                        chartData.value.datasets[0].data.shift();
-                    }
 
+        const initializeChartData = () => {
+            chartData.value.labels = store.state.co2Values.map((entry: { timestamp: any; }) => entry.timestamp);
+            chartData.value.datasets[0].data = store.state.co2Values.map((entry: { value: any; }) => entry.value);
+            const maxCo2Value = Math.max(...chartData.value.datasets[0].data);
+
+            if (maxCo2Value <= 1000) {
+                maxY.value = 1000;
+            } else if (maxCo2Value > 1000 && maxCo2Value <= 2000) {
+                maxY.value = 2000;
+            } else if (maxCo2Value > 2000 && maxCo2Value <= 3000) {
+                maxY.value = 3000;
+            } else if (maxCo2Value > 3000) {
+                maxY.value = maxCo2Value;  // Optional: Wenn der CO2-Wert 3000 übersteigt, passt sich das Diagramm entsprechend an.
+            }
+        };
+
+
+        onMounted(() => {
+            setInterval(() => {
+                if (store.state.co2Values.length > 0 && store.state.co2Values[store.state.co2Values.length - 1].value !== lastAddedValue) {
+                    lastAddedValue = store.state.co2Values[store.state.co2Values.length - 1].value;
+                    initializeChartData();
                 }
-            })
+            }, 10); // jede Sekunde
         });
 
-
         const chartOptions = computed(() => ({
-            type: 'line',
             responsive: true,
-            options: {
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'CO2-Diagramm',
-                    }
-                }
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'CO2-Diagramm',
+                },
+                datalabels: {
+                    color: '#000000',
+                    backgroundColor: 'rgba(255,255,255,0.8)',  // Weißer Hintergrund mit etwas Transparenz
+                    borderColor: 'rgba(0,0,0,0.5)',  // Graue Randfarbe
+                    borderRadius: 4,  // Abgerundete Ecken
+                    borderWidth: 1,  // Breite der Randlinie
+                    anchor: 'start',  // Positioniert das Label in der Mitte des Datenpunkts
+                    align: 'top',  // Zentriert das Label vertikal im Verhältnis zum Datenpunkt
+                    offset: 10,  // Verschiebt das Label 10 Pixel nach oben
+                    formatter: (value: any, ctx: { dataset: { data: { [x: string]: any; }; }; dataIndex: string | number; }) => {
+                        return ctx.dataset.data[ctx.dataIndex];
+                    },
+                },
             },
             scales: {
                 x: {
@@ -126,7 +139,7 @@ export default defineComponent({
                         display: true,
                         unit: 'second',
                         displayFormats: {
-                            second: 'hh:mm:ss'
+                            second: 'HH:mm:ss'
                         }
                     },
                     ticks: {
@@ -141,7 +154,7 @@ export default defineComponent({
                 y: {
                     display: true,
                     beginAtZero: true,
-                    title: { 
+                    title: {
                         display: true,
                         text: 'ppm'
                     },
@@ -154,41 +167,38 @@ export default defineComponent({
                     grid: {
                         color: function (context: { tick: { value: number; }; }) {
                             if (context.tick.value == 400) {
-                                return 'rgba(150,220,0,0.4)';
+                                return 'rgba(150,220,0, 0.4)';
                             } else if (context.tick.value == 1000) {
                                 return 'rgba(220,120,0, 0.4)';
                             } else if (context.tick.value == 2000) {
-                                return 'rgba(270,20,0, 0.4)';
+                                return 'rgba(255,20,0, 0.4)';
+                            } else if (context.tick.value == 3000) {
+                                return 'rgba(120,10,10, 0.8)';
                             }
                             return 'rgba(0,0,0,0.1)';
                         },
                         lineWidth: function (context: { tick: { value: number; }; }) {
-                            if (context.tick.value == 400 || context.tick.value == 1000 || context.tick.value == 2000) {
+                            if (context.tick.value == 400 || context.tick.value == 1000 || context.tick.value == 2000 || context.tick.value == 5000) {
                                 return 2;
                             }
                             return 1;
                         },
-                        drawBorder: false,
+                        drawBorder: true,
                         drawOnChartArea: true,
                         drawTicks: false,
                     },
                 },
             },
-            elements: {
-                line: {
-                    borderColor: 'rgba(75,192,192,0.1)', // Halbtransparente Linie
-                    fill: true,
-                    backgroundColor: 'rgba(75,192,192,0.2)' // Transparenz für die Flächenfüllung
-                }
-            }
         }));
+
 
         return {
             chartData,
             showModal,
+            closeModals,
             showChart,
             datacollection: chartData,
-            chartOptions,
+            chartOptions
         };
     }
 })
