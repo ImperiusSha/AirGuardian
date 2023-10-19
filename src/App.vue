@@ -73,7 +73,7 @@ export default defineComponent({
 
     const goToHomePage = () => {
       router.push({ name: 'Homepage' });
-    };
+    }; 
 
     const connectToSensorBox = () => {
       showModal.value = false;
