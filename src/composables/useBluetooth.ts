@@ -106,6 +106,10 @@ export function useBluetooth() {
             const co2Characteristic = CO2_SERVICE.characteristics.find(
                 (c) => c.uuid === '61fac1c0-75c6-4216-a801-9241dea5eac6'
             );
+
+            // const allServices = await BleClient.getServices(device.deviceId);
+            // console.log("Alle verfügbaren Dienste:", allServices);
+
             console.log('CO2_Characteristik?: ' + co2Characteristic?.uuid);
             if (co2Characteristic) {
                 try {
