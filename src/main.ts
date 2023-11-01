@@ -6,6 +6,7 @@ import { Chart, LineController, CategoryScale, LinearScale, PointElement, LineEl
 import 'chartjs-adapter-date-fns';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'bootstrap/dist/css/bootstrap.css';
+import 'leaflet/dist/leaflet.css';
 
 
 Chart.register(ChartDataLabels, LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale);
