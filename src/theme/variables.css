@@ -12,13 +12,13 @@ http://ionicframework.com/docs/theming/ */
 }
 
 .status-indicator.is-connected {
-  background-color: green;
-  border: 2px solid darkgreen; /* 3D-Effekt hinzufügen */
+  background-color: rgb(234, 230, 2);
+  border: 3px solid rgb(217, 203, 0); /* 3D-Effekt hinzufügen */
 }
 
 .status-indicator:not(.is-connected) {
-  background-color: red;
-  border: 2px solid darkred; /* 3D-Effekt hinzufügen */
+  background-color: rgb(226, 174, 2);
+  border: 3px solid rgb(188, 104, 3); /* 3D-Effekt hinzufügen */
   animation: pulse 2s infinite;
 }
 

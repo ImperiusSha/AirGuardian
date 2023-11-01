@@ -2,6 +2,7 @@
   <div>
     <!-- Beginn der NavBar -->
     <div class="navbar">
+      <div class="cloud"></div>
       <div class="navbar-content">
         <input type="checkbox" id="checkbox2" class="checkbox2 visuallyHidden" v-model="menuOpen">
         <label :class="{ 'hamburger-disabled': !isConnected }" for="checkbox2">
@@ -12,7 +13,7 @@
             <span class="bar bar4"></span>
           </div>
         </label>
-        <h1 class="navbar-title">AirGuardian</h1>
+        <h1 class="navbar-title">Air Guardian</h1>
         <ion-button fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
           @click="showModal = true"></ion-button>
       </div>
@@ -177,11 +178,34 @@ export default defineComponent({
 }
 
 .navbar {
-  background-color: #1E88E5;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  background-image: linear-gradient(to top, rgba(58, 209, 141, 0.9) 2%, rgb(218, 216, 216) 10%, rgb(83, 140, 204) 60%);
+  position: relative;
+  overflow: hidden;
 }
+
+.cloud {
+  background-image: url('/images/clouds.png');
+  position: absolute;
+  top: -60%;
+  left: 0;
+  animation: moveCloud 10s cubic-bezier(.16,.26,.55,.23) infinite;
+  z-index: 5000;
+  width: 10%;
+  height: 100%;
+  background-size: contain;
+  transform: scale(0.8);
+}
+
+@keyframes moveCloud {
+    0% {
+        left: -80%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
 
 .navbar-content {
   display: flex;
@@ -192,6 +216,7 @@ export default defineComponent({
 
 .navbar-title {
   color: white;
+  text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.2);
   font-size: 24px;
   margin: 0;
   cursor: pointer;
@@ -318,5 +343,4 @@ h1 {
 #statusIndicator {
   margin-left: auto;
   align-self: center;
-}
-</style>
+}</style>
