@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Dashboard from '../views/Dashboard.vue';
+import MapView from '@/views/MapView.vue';
 
 const routes = [
   {
@@ -7,7 +8,11 @@ const routes = [
     name: 'Dashboard',
     component: Dashboard
   },
-  // ...
+  {
+    path: '/mapView',
+    name: 'MapView',
+    component: MapView
+  }
 ];
 
 const router = createRouter({
