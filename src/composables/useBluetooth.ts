@@ -79,7 +79,7 @@ const SERVICES = [
 export function useBluetooth() {
     let initialAutoConnect = false;
     const autoConnect = ref(initialAutoConnect);
-    localStorage.getItem('autoConnect') === 'true';
+    initialAutoConnect = localStorage.getItem('autoConnect') === 'true';
     const isConnected = ref(false);
     const services = ref<BleService[]>([]);
     const decoder = new TextDecoder('utf-8');

@@ -2,12 +2,26 @@
 
 import { createStore } from 'vuex'
 
+interface SensorDataPoint {
+    timestamp: string;
+    location: {
+        lat: number;
+        lng: number;
+    };
+    co2Value?: number;
+    pm10Value?: number;
+    pm25Value?: number;
+    tempValue?: number;
+}
+
+
 export default createStore({
     state: {
         co2Values: [] as { timestamp: string, value: number }[],
         pm10Values: [] as { timestamp: string, value: number }[],
         pm25Values: [] as { timestamp: string, value: number }[],
-        tempValues: [] as number[]
+        tempValues: [] as number[],
+        sensorData: [] as SensorDataPoint[],
     },
     mutations: {
         addCo2Value(state, value: number) {
@@ -62,12 +76,20 @@ export default createStore({
         addTempValue(state, value: number) {
             state.tempValues.push(value);
         },
+        SET_SENSOR_DATA(state, data) {
+            state.sensorData = data;
+        },
+        ADD_LOCATION_AND_DATA(state, payload) {
+            state.sensorData.push(payload);
+        }
     },
     actions: {
-
+        addLocationAndData({ commit }, payload) {
+            commit('ADD_LOCATION_AND_DATA', payload);
+        }
     },
     getters: {
-
+        sensorData: state => state.sensorData
     },
     modules: {
 
