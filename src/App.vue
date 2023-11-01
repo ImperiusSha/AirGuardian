@@ -19,6 +19,7 @@
       <div v-if="menuOpen" class="dropdown-menu">
         <ion-button @click="goToHomePage">Startseite</ion-button>
         <ion-button @click="goToDashboard">Dashboard</ion-button>
+        <ion-button @click="goToMap">Karte</ion-button>
       </div>
     </div>
     <!-- Ende der NavBar -->
@@ -39,7 +40,7 @@
 
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, watch } from 'vue';
 import { IonButton, IonCheckbox } from '@ionic/vue';
 import { useRouter } from 'vue-router';
 import { useBluetooth } from './composables/useBluetooth';
@@ -67,13 +68,21 @@ export default defineComponent({
 
     const goToDashboard = () => {
       if (isConnected.value) {
+        menuOpen.value = false;
         router.push({ name: 'Dashboard' });
       }
     };
 
     const goToHomePage = () => {
+      menuOpen.value = false;
       router.push({ name: 'Homepage' });
-    }; 
+    };
+
+    const goToMap = () => {
+      menuOpen.value = false;
+      router.push({ name: 'MapView' });
+    };
+
 
     const connectToSensorBox = () => {
       showModal.value = false;
@@ -84,6 +93,12 @@ export default defineComponent({
       }
     };
 
+    watch(isConnected, (newVal) => {
+      if (!newVal) {
+        goToHomePage();
+      }
+    });
+
     return {
       isConnected,
       showModal,
@@ -93,6 +108,7 @@ export default defineComponent({
       isConnectedIndicator,
       goToDashboard,
       goToHomePage,
+      goToMap,
       toggleMenu,
       menuOpen
     };
@@ -105,6 +121,20 @@ export default defineComponent({
 #diagramButton {
   top: 0;
   left: 0;
+}
+
+/* Für Bildschirmgrößen bis zu 768px */
+@media (max-width: 768px) {
+  .dropdown-menu {
+    width: 90%;
+  }
+}
+
+/* Für Bildschirmgrößen bis zu 1024px */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .dropdown-menu {
+    width: 30%;
+  }
 }
 </style>
 
@@ -288,4 +318,5 @@ h1 {
 #statusIndicator {
   margin-left: auto;
   align-self: center;
-}</style>
+}
+</style>
