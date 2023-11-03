@@ -188,7 +188,7 @@ export default defineComponent({
   position: absolute;
   top: -60%;
   left: 0;
-  animation: moveCloud 10s cubic-bezier(.16,.26,.55,.23) infinite;
+  animation: moveCloud 30s cubic-bezier(.16,.26,.55,.23) infinite;
   z-index: 5000;
   width: 10%;
   height: 100%;
