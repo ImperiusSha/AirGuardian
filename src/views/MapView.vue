@@ -18,7 +18,7 @@ import { useRouter } from 'vue-router';
 
 export default {
     setup() {
-        const router = useRouter(); // Stellen Sie sicher, dass Sie useRouter importieren
+        const router = useRouter();
         const touchStartX = ref(0);
         const touchEndX = ref(0);
 
@@ -32,7 +32,7 @@ export default {
         };
 
         const handleSwipeGesture = () => {
-            const minSwipeDistance = 30; // Minimale Distanz für einen Swipe
+            const minSwipeDistance = 30;
             if (touchEndX.value - touchStartX.value > minSwipeDistance) {
                 // Swipe nach rechts
                 router.push({ name: 'Homepage' });
@@ -66,13 +66,13 @@ export default {
     height: 10%;
     background: rgba(0, 0, 0, 0.1);
     z-index: 1000;
-    
+
 }
 
 .line {
     position: absolute;
-    width: 20px; /* Breite der Linie, entspricht der Breite des swipe-area */
-    height: 1px; /* Dicke der Linie */
+    width: 20px; 
+    height: 1px; 
     background-color: rgba(255, 255, 255, 0.7);
 }
 

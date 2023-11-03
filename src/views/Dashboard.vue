@@ -55,7 +55,7 @@ export default defineComponent({
         };
 
         const handleSwipeGesture = () => {
-            const minSwipeDistance = 30; // Minimale Distanz für einen Swipe
+            const minSwipeDistance = 30; 
             if (touchStartX.value - touchEndX.value > minSwipeDistance) {
                 router.push({ name: 'Homepage' });
             }
