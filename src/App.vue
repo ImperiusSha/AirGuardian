@@ -5,14 +5,14 @@
       <div class="cloud"></div>
       <div class="navbar-content">
         <input type="checkbox" id="checkbox2" class="checkbox2 visuallyHidden" v-model="menuOpen">
-        <label :class="{ 'hamburger-disabled': !isConnected }" for="checkbox2">
+        <!-- <label :class="{ 'hamburger-disabled': !isConnected }" for="checkbox2">
           <div class="hamburger hamburger2">
             <span class="bar bar1"></span>
             <span class="bar bar2"></span>
             <span class="bar bar3"></span>
             <span class="bar bar4"></span>
           </div>
-        </label>
+        </label> -->
         <h1 class="navbar-title">Air Guardian</h1>
         <ion-button fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
           @click="showModal = true"></ion-button>
