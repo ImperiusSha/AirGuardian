@@ -1,5 +1,6 @@
 <template>
-  <div class="background" :style="{ backgroundImage: `url(${backgroundImage})` }">
+  <div class="background" :style="{ backgroundImage: `url(${backgroundImage})` }" @touchstart="handleTouchStart"
+    @touchend="handleTouchEnd">
   </div>
 </template>
 
@@ -18,8 +19,30 @@ export default defineComponent({
     console.log("Startseite setup erreicht");
     const router = useRouter();
     const store = useStore();
+    const touchStartX = ref(0);
+    const touchEndX = ref(0);
     const backgroundImage = ref(goodAir); // Initialer Wert
     console.log("Startseite GIF sollte initialisiert sein");
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.value = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX.value = e.changedTouches[0].clientX;
+      handleSwipeGesture();
+    };
+
+    const handleSwipeGesture = () => {
+      const minSwipeDistance = 30; // Minimale Distanz für einen Swipe
+      if (touchEndX.value - touchStartX.value > minSwipeDistance) {
+        // Swipe nach rechts
+        router.push({ name: 'Dashboard' });
+      } else if (touchStartX.value - touchEndX.value > minSwipeDistance) {
+        // Swipe nach links
+        router.push({ name: 'MapView' });
+      }
+    };
 
     watch(store.state.co2Values, (newValue: number | null) => {
       nextTick().then(() => {
@@ -35,15 +58,17 @@ export default defineComponent({
       })
     });
 
-      const goToDashboard = () => {
-        router.push({ name: 'Dashboard' });
-      };
+    const goToDashboard = () => {
+      router.push({ name: 'Dashboard' });
+    };
 
-      return {
-        goToDashboard,
-        backgroundImage
-      };
-    },
+    return {
+      goToDashboard,
+      backgroundImage,
+      handleTouchStart,
+      handleTouchEnd,
+    };
+  },
 })
 </script>
 
