@@ -30,7 +30,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style scoped>
 .modal {
     position: fixed;
     display: flex;

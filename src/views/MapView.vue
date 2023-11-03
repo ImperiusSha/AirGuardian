@@ -40,7 +40,7 @@ export default {
         };
 
         const handleClick = () => {
-            router.push({ name: 'Homepage'});
+            router.push({ name: 'Homepage' });
 
         }
 
@@ -66,13 +66,12 @@ export default {
     height: 10%;
     background: rgba(0, 0, 0, 0.1);
     z-index: 1000;
-
 }
 
 .line {
     position: absolute;
-    width: 20px; 
-    height: 1px; 
+    width: 20px;
+    height: 1px;
     background-color: rgba(255, 255, 255, 0.7);
 }
 
@@ -91,6 +90,4 @@ export default {
     transform-origin: bottom right;
     scale: 2.3;
 }
-
-
 </style>
