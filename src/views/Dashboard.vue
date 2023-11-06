@@ -3,19 +3,19 @@
         <div class="buttons">
             <div class="outer" @click="showChart('co2')">
                 <div class="inner" v-bind:class="{ open: currentChart === 'co2' }">
-                    <label>{{ currentChart === 'co2' ? '' : 'CO2' }}</label>
+                    <label class="label">CO2</label>
                 </div>
             </div>
 
             <div class="outer" @click="showChart('pm')">
                 <div class="inner" v-bind:class="{ open: currentChart === 'pm' }">
-                    <label>{{ currentChart === 'pm' ? '' : 'PM' }}</label>
+                    <label class="label">PM</label>
                 </div>
             </div>
 
             <div class="outer" @click="showChart('temp')">
                 <div class="inner" v-bind:class="{ open: currentChart === 'temp' }">
-                    <label>{{ currentChart === 'temp' ? '' : 'TEMP' }}</label>
+                    <label class="label">TEMP</label>
                 </div>
             </div>
 
@@ -81,7 +81,7 @@ export default defineComponent({
 .dashboard {
     flex-direction: column;
     align-items: center;
-    height: 100%;
+    height: auto;
 }
 
 .buttons {
@@ -95,17 +95,14 @@ export default defineComponent({
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
+    background-color: #fefefe;
+    border: 1px solid rgb(218, 216, 216);
     border-radius: 5px;
     margin: 10px;
     padding: 10px;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
-}
-
-.outer:hover {
-    background-color: #e8e8e8;
+    opacity: 50%;
 }
 
 .inner {
@@ -116,8 +113,12 @@ export default defineComponent({
     height: 100%;
     text-align: center;
 }
-
-.inner.open {
-    background-color: #ddd;
+.label {
+    font-size: .7em;
+    text-transform: uppercase;
+    color: #7a7a7a;
+    transition: all .3s ease-in;
+    opacity: 1;
+    cursor: pointer;
 }
 </style>
