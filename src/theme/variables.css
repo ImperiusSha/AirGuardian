@@ -8,24 +8,25 @@ http://ionicframework.com/docs/theming/ */
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Schatten hinzufügen */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); 
 }
 
 .status-indicator.is-connected {
-  background-color: green;
-  border: 2px solid darkgreen; /* 3D-Effekt hinzufügen */
+  background-color: rgb(229, 225, 3);
+  border: 3px solid rgb(255, 238, 0); 
+  animation: pulse 3s infinite;
 }
 
 .status-indicator:not(.is-connected) {
-  background-color: red;
-  border: 2px solid darkred; /* 3D-Effekt hinzufügen */
-  animation: pulse 2s infinite;
+  background-color: rgb(255, 0, 0);
+  border: 3px solid rgba(216, 3, 3, 0.694); 
+  animation: pulse 3s infinite;
 }
 
 @keyframes pulse {
   0% {
       transform: scale(0.95);
-      opacity: 0.7;
+      opacity: 1;
   }
   70% {
       transform: scale(1);

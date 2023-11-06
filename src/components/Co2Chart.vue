@@ -96,7 +96,7 @@ export default defineComponent({
             } else if (maxCo2Value > 2000 && maxCo2Value <= 3000) {
                 maxY.value = 3000;
             } else if (maxCo2Value > 3000) {
-                maxY.value = maxCo2Value;  // Optional: Wenn der CO2-Wert 3000 übersteigt, passt sich das Diagramm entsprechend an.
+                maxY.value = maxCo2Value;  // Wenn der CO2-Wert 3000 übersteigt, passt sich das Diagramm entsprechend an.
             }
         };
 
@@ -107,7 +107,7 @@ export default defineComponent({
                     lastAddedValue = store.state.co2Values[store.state.co2Values.length - 1].value;
                     initializeChartData();
                 }
-            }, 10); // jede Sekunde
+            }, 10); // jede 10 Sekunden
         });
 
         const chartOptions = computed(() => ({
@@ -119,13 +119,13 @@ export default defineComponent({
                 },
                 datalabels: {
                     color: '#000000',
-                    backgroundColor: 'rgba(255,255,255,0.8)',  // Weißer Hintergrund mit etwas Transparenz
-                    borderColor: 'rgba(0,0,0,0.5)',  // Graue Randfarbe
-                    borderRadius: 4,  // Abgerundete Ecken
-                    borderWidth: 1,  // Breite der Randlinie
-                    anchor: 'start',  // Positioniert das Label in der Mitte des Datenpunkts
-                    align: 'top',  // Zentriert das Label vertikal im Verhältnis zum Datenpunkt
-                    offset: 10,  // Verschiebt das Label 10 Pixel nach oben
+                    backgroundColor: 'rgba(255,255,255,0.8)', 
+                    borderColor: 'rgba(0,0,0,0.5)',  
+                    borderRadius: 4,  
+                    borderWidth: 1,  
+                    anchor: 'start',
+                    align: 'top', 
+                    offset: 10, 
                     formatter: (value: any, ctx: { dataset: { data: { [x: string]: any; }; }; dataIndex: string | number; }) => {
                         return ctx.dataset.data[ctx.dataIndex];
                     },
@@ -158,9 +158,9 @@ export default defineComponent({
                         display: true,
                         text: 'ppm'
                     },
-                    min: 0,    // Setzt den Minimalwert der y-Achse
-                    max: maxY.value,  // Setzt den Maximalwert der y-Achse
-                    ticks: { // Legt die Schritte der y-Achse fest
+                    min: 0,
+                    max: maxY.value,
+                    ticks: {
                         stepSize: 100,
                     },
                     // Passt das Raster der y-Achse an um Hilfslinien hinzuzufügen

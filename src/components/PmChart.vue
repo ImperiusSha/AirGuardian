@@ -1,10 +1,22 @@
-<!-- PM10Chart.vue -->
+<!-- PMChart.vue -->
 <template>
     <div class="chart-container">
-        <div class="info-container">
-            <button class="pm-button" @click="showInfoModal = true">Wissenswertes zu den PM-Werten</button>
-            <button class="modal-button settings-button" @click="showSettingsModal = true">
-                <i class="fas fa-cog"></i>
+        <div class="card">
+            <div class="chart-controls">
+                <div class="button-container">
+                    <button @click="selectedPM = 'PM10';" v-bind:class="{ active: selectedPM === 'PM10' }">
+                        PM10
+                    </button>
+                    <button @click="selectedPM = 'PM2.5';" v-bind:class="{ active: selectedPM === 'PM2.5' }">
+                        PM2.5
+                    </button>
+                </div>
+            </div>
+            <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
+        </div>
+        <div class="icon-bar">
+            <button class="custom-icon-button" @click="showInfoModal = true">
+                <i class="fas fa-info-circle custom-icon"></i>
             </button>
             <div v-if="showInfoModal" class="modal info-modal" @click.self="closeModals">
                 <div class="info-modal-content" @click.stop>
@@ -55,31 +67,29 @@
                         ist wahrscheinlich betroffen.</p>
                 </div>
             </div>
-
-            <div v-if="showSettingsModal" class="modal settings-modal" @click.self="closeModals">
-                <div class="settings-modal-content" @click.stop>
+            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
+            <button class="custom-icon-button" @click="showSettingsModal = true">
+                <i class="fas fa-cog custom-icon"></i>
+            </button>
+            <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeModals">
+                <div class="modal-content settings-modal-content" @click.stop>
                     <span class="close-button" @click="showSettingsModal = false">&times;</span>
-                    <div>
-                        <input type="radio" id="pm10" value="PM10" v-model="selectedPM">
-                        <label for="pm10">PM10</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="pm25" value="PM2.5" v-model="selectedPM">
-                        <label for="pm25">PM2.5</label>
-                    </div>
                 </div>
             </div>
-            <ion-icon @click.stop="exportData" :icon='shareOutline'></ion-icon>
         </div>
-        <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
-        <p class="average-value">Durchschnittswert: {{ averageValue }}</p>
-
+        <p class="average-value">
+            <span v-if="isLoading">
+                <div class="loader"></div>
+            </span>
+            <span v-else-if="isError">Daten nicht verfügbar</span>
+            <span v-else>Durchschnittswert: {{ averageValue }}</span>
+        </p>
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'; // Import Capacitor Filesystem
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { LineChart } from 'vue-chart-3';
 import { IonIcon } from '@ionic/vue';
 import { shareOutline } from 'ionicons/icons';
@@ -95,6 +105,12 @@ export default defineComponent({
     components: {
         LineChart,
         IonIcon
+    },
+    data() {
+        return {
+            isLoading: true,  // Startet im Ladezustand
+            isError: false
+        };
     },
     // Verwendung des "reactive"-Werkzeug von Vue 3, um reaktive Dateneigenschaft herzustellen
     // Ermöglicht die automatische Aktualisierung des Diagrammes bei Änderungen der Werte
@@ -113,7 +129,10 @@ export default defineComponent({
             showInfoModal.value = false;
             showSettingsModal.value = false;
         };
-
+        const isActive = ref(false);
+        const isLoading = ref(true);
+        const isError = ref(false);
+        const noDataTimeout = ref<number | null>(null);
 
         type Dataset = {
             label: string,
@@ -138,44 +157,58 @@ export default defineComponent({
 
 
         const initializeChartData = () => {
-            // Leere die Datasets
+            // Leert die Datasets
             chartData.value.datasets = [];
 
-            // Wähle die Daten basierend auf dem ausgewählten PM-Wert
+            // Wählt die Daten basierend auf dem ausgewählten PM-Wert
             const data = selectedPM.value === 'PM10' ? store.state.pm10Values : store.state.pm25Values;
 
-            // Erstelle Labels und Werte aus den Daten
+            // Überprüfe, ob Daten vorhanden sind
+            if (data && data.length > 0) {
+                isLoading.value = false;  // Beende den Ladezustand
+                isError.value = false;  // Setze Fehlerzustand zurück
+                if (noDataTimeout.value !== null) {
+                    clearTimeout(noDataTimeout.value);
+                }
+
+
+            // Erstellt Labels und Werte aus den Daten
             const labels = data.map((entry: { timestamp: any; }) => entry.timestamp);
             const values = data.map((entry: { value: any; }) => entry.value);
 
-            // Füge die Labels und Werte zum chartData hinzu
-            chartData.value.labels = labels;
-            chartData.value.datasets.push({
-                label: selectedPM.value,
-                data: values,
-                borderColor: selectedPM.value === 'PM10' ? 'rgba(100,100,100,0.6)' : 'rgba(50,150,50,0.6)',
-                backgroundColor: 'rgba(75,75,75,0.2)',
-                fill: true,
-            });
+                // Füge die Labels und Werte zum chartData hinzu
+                chartData.value.labels = labels;
+                chartData.value.datasets.push({
+                    label: selectedPM.value,
+                    data: values,
+                    borderColor: selectedPM.value === 'PM10' ? 'rgba(80,80,80,0.5)' : 'rgba(120,120,120,0.5)',
+                    backgroundColor: 'rgba(75,75,75,0.1)',
+                    fill: true,
+                });
 
-            // Die Logik zur Bestimmung des maxY-Wertes muss entsprechend angepasst werden, um das Maximum sowohl aus PM10- als auch PM2.5-Werten zu bestimmen.
-            const allValues = chartData.value.datasets.reduce((acc, dataset) => acc.concat(dataset.data), [] as number[]);
-            const maxValue = Math.max(...allValues);
+                // Die Logik zur Bestimmung des maxY-Wertes muss entsprechend angepasst werden, um das Maximum sowohl aus PM10- als auch PM2.5-Werten zu bestimmen.
+                const allValues = chartData.value.datasets.reduce((acc, dataset) => acc.concat(dataset.data), [] as number[]);
+                const maxValue = Math.max(...allValues);
 
-            if (maxValue <= 50) {
-                maxY.value = 50;
-            } else if (maxValue > 50 && maxValue <= 100) {
-                maxY.value = 100;
-            } else if (maxValue > 100 && maxValue <= 200) {
-                maxY.value = 200;
-            } else if (maxValue > 200 && maxValue <= 350) {
-                maxY.value = 350;
-            } else if (maxValue > 350) {
-                maxY.value = maxValue;  // Wenn der Wert 350 übersteigt, passt sich das Diagramm entsprechend an.
+                if (maxValue <= 50) {
+                    maxY.value = 50;
+                } else if (maxValue > 50 && maxValue <= 100) {
+                    maxY.value = 100;
+                } else if (maxValue > 100 && maxValue <= 200) {
+                    maxY.value = 200;
+                } else if (maxValue > 200 && maxValue <= 350) {
+                    maxY.value = 350;
+                } else if (maxValue > 350) {
+                    maxY.value = maxValue;  // Wenn der Wert 350 übersteigt, passt sich das Diagramm entsprechend an.
+                }
+            } else {
+                // Keine Daten gefunden
+                isLoading.value = false;  // Beende den Ladezustand
+                isError.value = true;  // Setze Fehlerzustand
             }
         };
 
-        // Berechne den Durchschnitt der ausgewählten PM-Werte
+        // Berechnet den Durchschnitt der ausgewählten PM-Werte
         const averageValue = computed(() => {
             const data = selectedPM.value === 'PM10' ? store.state.pm10Values : store.state.pm25Values;
             const values = data.map((entry: { value: any; }) => entry.value);
@@ -184,13 +217,22 @@ export default defineComponent({
         });
 
         onMounted(() => {
+            // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
+            noDataTimeout.value = window.setTimeout(() => {
+                if (isLoading.value) {
+                    isLoading.value = false;
+                    isError.value = true;
+                }
+            }, 60000);  // Wartezeit von 1 Minute, kann angepasst werden
+
             setInterval(() => {
                 if (store.state.pm10Values.length > 0 && store.state.pm10Values[store.state.pm10Values.length - 1].value !== lastAddedValue) {
                     lastAddedValue = store.state.pm10Values[store.state.pm10Values.length - 1].value;
                     initializeChartData();
                 }
-            }, 10); // jede Sekunde
+            }, 10); // jede 10 Sekunden
         });
+
 
         watch(selectedPM, () => {
             initializeChartData();
@@ -199,10 +241,6 @@ export default defineComponent({
         const chartOptions = computed(() => ({
             responsive: true,
             plugins: {
-                title: {
-                    display: true,
-                    text: chartTitle.value,
-                },
                 datalabels: {
                     color: '#000000',
                     backgroundColor: 'rgba(255,255,255,0.8)',
@@ -217,9 +255,29 @@ export default defineComponent({
                     },
                 },
                 legend: {
-                    display: true,
+                    display: false,
                     position: 'top',
                 },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                zoom: {
+                    zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: 'xy',
+                    },
+                },
+                animations: {
+                    tension: {
+                        duration: 1000,
+                        easing: 'linear',
+                        from: 1,
+                        to: 0,
+                        loop: true
+                    }
+                }
             },
             scales: {
                 x: {
@@ -229,7 +287,7 @@ export default defineComponent({
                         display: true,
                         unit: 'second',
                         displayFormats: {
-                            second: 'HH:mm:ss'
+                            second: 'HH:mm'
                         }
                     },
                     ticks: {
@@ -238,7 +296,11 @@ export default defineComponent({
                     },
                     title: {
                         display: true,
-                        text: 'Zeitangabe'
+                        text: 'Zeitangabe',
+                        font: {
+                            size: 16,
+                            weight: 500
+                        }
                     }
                 },
                 y: {
@@ -246,7 +308,11 @@ export default defineComponent({
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'µg/m³'
+                        text: 'µg/m³',
+                        font: {
+                            size: 16,
+                            weight: 500
+                        }
                     },
                     min: 0,    // Setzt den Minimalwert der y-Achse
                     max: maxY.value,  // Setzt den Maximalwert der y-Achse
@@ -310,7 +376,7 @@ export default defineComponent({
                 await Share.share({
                     title: 'Exported Data',
                     text: 'Here is the exported data from AirGuardian',
-                    url: fileUri.uri, 
+                    url: fileUri.uri,
                     dialogTitle: 'Share CSV data'
                 });
 
@@ -319,9 +385,6 @@ export default defineComponent({
                 console.error("Unable to write file", e);
             }
         }
-
-
-
 
         return {
             chartData,
@@ -336,18 +399,43 @@ export default defineComponent({
             chartOptions,
             initializeChartData,
             exportData,
-            shareOutline
+            shareOutline,
+            isActive,
+            isLoading,
+            isError
         };
     }
 })
 </script>
 
 <style>
-/* CSS-Code für den Button */
 .chart-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+}
+
+.chart-controls button {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 0 5px;
+    flex-direction: column;
+    cursor: pointer;
+    outline: none;
+}
+
+.chart-controls button:hover {
+    background-color: #e9e9e9;
+}
+
+.buttons-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
 }
 
 .info-container {
@@ -356,6 +444,7 @@ export default defineComponent({
     width: 100%;
     align-items: center;
     gap: 10px;
+    padding: 1rem;
 }
 
 .modal-button {
@@ -368,6 +457,7 @@ export default defineComponent({
     width: 30px;
     height: 30px;
     cursor: pointer;
+    overflow: hidden;
 }
 
 .inner {
@@ -377,22 +467,12 @@ export default defineComponent({
     line-height: 30px;
 }
 
-label {
-    font-size: .8em;
-    text-transform: uppercase;
-    color: grey;
-    transition: all .3s ease-in;
-    opacity: 1;
-    cursor: pointer;
-}
-
 .inner:before,
 .inner:after {
     position: absolute;
     content: '';
     height: 1px;
     width: inherit;
-    background: #5c5e5d;
     left: 0;
     transition: all .3s ease-in;
 }
@@ -400,7 +480,6 @@ label {
 .inner:before {
     top: 0;
     transform: rotate(0);
-
 }
 
 .inner:after {
@@ -408,122 +487,236 @@ label {
     transform: rotate(0);
 }
 
-.inner.open label {
-    opacity: 1;
-}
-
 .inner.open:before {
     top: 50%;
-    transform: rotate(45deg);
+    left: 49%;
+    background: rgba(58, 209, 141, 0.9);
+    transform: rotate(90deg);
 }
 
 .inner.open:after {
     bottom: 50%;
-    transform: rotate(-45deg);
+    left: -49%;
+    background: rgba(58, 209, 141, 0.9);
+    transform: rotate(-90deg);
+}
 
+.outer:has(.inner.open) {
+    background-color: #fefefe;
+    scale: 1.5;
+    opacity: 100%;
+    box-shadow: 0px 1px 2px #a2a2a2;
+}
+
+.inner.open .label {
+    color: rgb(83, 140, 204);
 }
 </style>
+<style scoped> @keyframes rotate {
+     100% {
+         transform: rotate(360deg);
+     }
+ }
 
-<style scoped>
-.average-value {
+ /* Responsives Design */
+ @media (max-width: 768px) {
+     .card {
+         padding: 0.5rem;
+     }
+
+     .info-container {
+         flex-direction: column;
+     }
+ }
+
+ .average-value {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     width: 100%;
+     height: 8%;
+     background-color: #fefefe;
+     border: 1px solid rgba(58, 209, 141, 0.9);
+     border-radius: 5px;
+     color: rgb(83, 140, 204);
+     bottom: -2%;
+     padding: 10px;
+     position: absolute;
+     margin-top: 20px;
+     font-size: 24px;
+     font-weight: bold;
+     box-shadow: 0px 0px 8px #a2a2a2;
+     z-index: 100;
+ }
+
+ .loader {
+     border: 8px solid #f3f3f3;
+     border-top: 8px solid rgb(83, 140, 204);
+     border-radius: 50%;
+     width: 50px;
+     height: 50px;
+     scale: 0.7;
+     animation: rotate 2s linear infinite;
+ }
+
+ .average-value span {
+     display: inline-block;
+ }
+
+ .average-value span:after {
+     content: '\2022';
+     display: inline-block;
+     margin-left: 10px;
+     animation: spin 1s linear infinite;
+ }
+
+ .average-value:not(.isLoading) span:after {
+     display: none;
+ }
+
+ .info-modal {
+     background-color: rgba(0, 0, 0, 0.4);
+ }
+
+ .info-modal-content {
+     background-color: #fefefe;
+     margin: 15% auto;
+     padding: 20px;
+     border: 1px solid #888;
+     width: 90%;
+ }
+
+ .pm-button:hover {
+     background-color: #555555;
+     color: white;
+ }
+
+ .modal {
+     display: block;
+     position: fixed;
+     z-index: 1;
+     left: 0;
+     top: 0;
+     width: 100%;
+     height: 100%;
+     overflow: auto;
+     background-color: rgba(0, 0, 0, 0.654);
+     justify-content: center;
+     align-items: center;
+ }
+
+ .close-button {
+     color: #aaaaaa;
+     float: right;
+     font-size: 28px;
+     font-weight: bold;
+ }
+
+ .close-button:hover,
+ .close-button:focus {
+     color: #000;
+     text-decoration: none;
+     cursor: pointer;
+ }
+
+ .card {
+     background: #ffffff;
+     box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
+     border-radius: 8px;
+     padding: 1rem;
+ }
+
+ .button-container {
+     display: flex;
+     justify-content: center;
+     margin-bottom: 10px;
+ }
+
+ .button-container button {
+     background-color: #fefefe;
+     border: 1px solid rgb(218, 216, 216);
+     border-radius: 5px;
+     padding: 10px;
+     margin: 0 5px;
+     color: #7a7a7a;
+     transition: all 0.3s ease-in-out;
+     cursor: pointer;
+     outline: none;
+ }
+
+ .button-container button.active:before,
+ .button-container button.active:after {
+     content: '';
+     position: absolute;
+     left: 0;
+     height: 2px;
+     width: 100%;
+     background-color: rgba(58, 209, 141, 0.9);
+ }
+
+ .button-container button.active:before {
+     top: 0;
+ }
+
+ .button-container button.active:after {
+     bottom: 0;
+ }
+
+ .button-container button {
+     position: relative;
+     overflow: hidden;
+ }
+
+ .button-container button:not(.active) {
+     opacity: 50%;
+ }
+
+  .icon-bar {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     width: 100%;
-    background-color: #eee;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 20px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
+    margin-top: 50px;
 }
 
-.info-modal {
-    background-color: rgba(0, 0, 0, 0.4);
+ .custom-icon {
+  margin: 0 20px; /* Setzt einen gleichmäßigen Abstand zwischen den Icons */
+  font-size: 30px; /* Größe der Icons */
+  color: #7a7a7a;
+  border: 2px solid rgb(83, 140, 204);
+  border-radius: 50%;
+  padding: 15px;
+  background-color: transparent;
+  box-shadow: 0px 0px 4px #a2a2a2;
+  opacity: 80%;  
 }
 
-.info-modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 90%;
+ .custom-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
-.settings-modal {
-    background-color: rgba(0, 0, 0, 0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+ .custom-icon:hover {
+     color: #333;
+     border-color: #333;
+ }
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .settings-modal-content {
-    background-color: #fefefe;
-    margin: 25% auto;
-    padding: 10px;
-    border: 1px solid #888;
-    width: 50%;
-    display: inline-flexbox;
-    max-width: 500px;
-}
-
-.modal-button {
-    border: none;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    transition-duration: 0.4s;
-    cursor: pointer;
-    background-color: white;
-    color: black;
-}
-
-.pm-button:hover,
-.modal-button:hover {
-    background-color: #555555;
-    color: white;
-}
-
-.modal {
-    display: block;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.654);
-    justify-content: center;
-    align-items: center;
-}
-
-.close-button {
-    color: #aaaaaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: #000;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-input[type=checkbox] {
-    margin-right: 10px;
-}
-
-label {
-    font-size: 1em;
-    color: grey;
-    cursor: pointer;
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
 }
 </style>
 

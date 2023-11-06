@@ -1,24 +1,24 @@
 <template>
-    <div class="dashboard">
+    <div class="dashboard" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
         <div class="buttons">
             <div class="outer" @click="showChart('co2')">
                 <div class="inner" v-bind:class="{ open: currentChart === 'co2' }">
-                    <label>{{ currentChart === 'co2' ? '' : 'CO2' }}</label>
+                    <label class="label">CO2</label>
                 </div>
             </div>
 
             <div class="outer" @click="showChart('pm')">
                 <div class="inner" v-bind:class="{ open: currentChart === 'pm' }">
-                    <label>{{ currentChart === 'pm' ? '' : 'PM' }}</label>
+                    <label class="label">PM</label>
                 </div>
             </div>
 
             <div class="outer" @click="showChart('temp')">
                 <div class="inner" v-bind:class="{ open: currentChart === 'temp' }">
-                    <label>{{ currentChart === 'temp' ? '' : 'TEMP' }}</label>
+                    <label class="label">TEMP</label>
                 </div>
             </div>
-            
+
         </div>
         <Co2Chart v-if="currentChart === 'co2'" />
         <PmChart v-if="currentChart === 'pm'" />
@@ -30,6 +30,7 @@
 import { defineComponent, ref } from 'vue';
 import Co2Chart from '../components/Co2Chart.vue';
 import PmChart from '../components/PmChart.vue';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
     name: 'Dashboard',
@@ -38,16 +39,39 @@ export default defineComponent({
         PmChart,
     },
     setup() {
-        const currentChart = ref<string | null>(null);
+        const savedChart = window.localStorage.getItem('selectedChart');
+        const currentChart = ref<string | null>(savedChart || 'co2');
+        const router = useRouter();
+        const touchStartX = ref(0);
+        const touchEndX = ref(0);
+
+        const handleTouchStart = (e: TouchEvent) => {
+            touchStartX.value = e.touches[0].clientX;
+        };
+
+        const handleTouchEnd = (e: TouchEvent) => {
+            touchEndX.value = e.changedTouches[0].clientX;
+            handleSwipeGesture();
+        };
+
+        const handleSwipeGesture = () => {
+            const minSwipeDistance = 30; 
+            if (touchStartX.value - touchEndX.value > minSwipeDistance) {
+                router.push({ name: 'Homepage' });
+            }
+        };
 
         const showChart = (chart: string) => {
             currentChart.value = chart;
+            window.localStorage.setItem('selectedChart', chart);
             console.log("Aktuelles Diagramm: " + currentChart.value);
         }
 
         return {
             currentChart,
-            showChart
+            showChart,
+            handleTouchStart,
+            handleTouchEnd
         }
     }
 });
@@ -55,9 +79,9 @@ export default defineComponent({
 
 <style scoped>
 .dashboard {
-    display: flex;
     flex-direction: column;
     align-items: center;
+    height: auto;
 }
 
 .buttons {
@@ -71,17 +95,14 @@ export default defineComponent({
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
+    background-color: #fefefe;
+    border: 1px solid rgb(218, 216, 216);
     border-radius: 5px;
     margin: 10px;
     padding: 10px;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
-}
-
-.outer:hover {
-    background-color: #e8e8e8;
+    opacity: 50%;
 }
 
 .inner {
@@ -92,9 +113,12 @@ export default defineComponent({
     height: 100%;
     text-align: center;
 }
-
-.inner.open {
-    background-color: #ddd;
+.label {
+    font-size: .7em;
+    text-transform: uppercase;
+    color: #7a7a7a;
+    transition: all .3s ease-in;
+    opacity: 1;
+    cursor: pointer;
 }
-
 </style>
