@@ -79,7 +79,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'; // Import Capacitor Filesystem
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { LineChart } from 'vue-chart-3';
 import { IonIcon } from '@ionic/vue';
 import { shareOutline } from 'ionicons/icons';
@@ -138,17 +138,17 @@ export default defineComponent({
 
 
         const initializeChartData = () => {
-            // Leere die Datasets
+            // Leert die Datasets
             chartData.value.datasets = [];
 
-            // Wähle die Daten basierend auf dem ausgewählten PM-Wert
+            // Wählt die Daten basierend auf dem ausgewählten PM-Wert
             const data = selectedPM.value === 'PM10' ? store.state.pm10Values : store.state.pm25Values;
 
-            // Erstelle Labels und Werte aus den Daten
+            // Erstellt Labels und Werte aus den Daten
             const labels = data.map((entry: { timestamp: any; }) => entry.timestamp);
             const values = data.map((entry: { value: any; }) => entry.value);
 
-            // Füge die Labels und Werte zum chartData hinzu
+            // Fügt die Labels und Werte zum chartData hinzu
             chartData.value.labels = labels;
             chartData.value.datasets.push({
                 label: selectedPM.value,
@@ -175,7 +175,7 @@ export default defineComponent({
             }
         };
 
-        // Berechne den Durchschnitt der ausgewählten PM-Werte
+        // Berechnet den Durchschnitt der ausgewählten PM-Werte
         const averageValue = computed(() => {
             const data = selectedPM.value === 'PM10' ? store.state.pm10Values : store.state.pm25Values;
             const values = data.map((entry: { value: any; }) => entry.value);
@@ -189,7 +189,7 @@ export default defineComponent({
                     lastAddedValue = store.state.pm10Values[store.state.pm10Values.length - 1].value;
                     initializeChartData();
                 }
-            }, 10); // jede Sekunde
+            }, 10); // jede 10 Sekunden
         });
 
         watch(selectedPM, () => {
@@ -248,9 +248,9 @@ export default defineComponent({
                         display: true,
                         text: 'µg/m³'
                     },
-                    min: 0,    // Setzt den Minimalwert der y-Achse
-                    max: maxY.value,  // Setzt den Maximalwert der y-Achse
-                    ticks: { // Legt die Schritte der y-Achse fest
+                    min: 0,
+                    max: maxY.value,
+                    ticks: {
                         stepSize: 10,
                     },
                     // Passt das Raster der y-Achse an um Hilfslinien hinzuzufügen
@@ -343,7 +343,6 @@ export default defineComponent({
 </script>
 
 <style>
-/* CSS-Code für den Button */
 .chart-container {
     display: flex;
     flex-direction: column;

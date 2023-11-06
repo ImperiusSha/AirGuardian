@@ -26,15 +26,18 @@
     <!-- Ende der NavBar -->
     <div v-if="showModal" class="modal">
       <div class="modal-content">
-        <span class="close-button" @click="showModal = false">&times;</span>
-        <h2>Verbindung zur Sensorbox</h2>
+        <div class="modal-header">
+          <h2>Verbindung zur Sensorbox</h2>
+          <span class="close-button" @click="showModal = false">&times;</span>
+        </div>
         <ion-checkbox v-model="autoConnect" @ionChange="toggleAutoConnect">Automatisch</ion-checkbox>
-        <div>
+        <div class="modal-footer">
           <ion-button @click="showModal = false">Abbrechen</ion-button>
           <ion-button @click="connectToSensorBox">Verbinden</ion-button>
         </div>
       </div>
     </div>
+
     <router-view></router-view>
   </div>
 </template>
@@ -154,6 +157,12 @@ export default defineComponent({
   background-color: rgb(0, 0, 0);
   background-color: rgba(0, 0, 0, 0.4);
 }
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
 
 .modal-content {
   background-color: #fefefe;
@@ -164,18 +173,29 @@ export default defineComponent({
 }
 
 .close-button {
+  margin-left: auto; 
   color: #aaa;
-  float: right;
   font-size: 28px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .close-button:hover,
 .close-button:focus {
   color: black;
-  text-decoration: none;
-  cursor: pointer;
 }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 20px;
+}
+
+h2 {
+  margin: 0; 
+  flex-grow: 1; 
+}
+
 
 .navbar {
   background-image: linear-gradient(to top, rgba(58, 209, 141, 0.9) 2%, rgb(218, 216, 216) 10%, rgb(83, 140, 204) 60%);
@@ -188,7 +208,7 @@ export default defineComponent({
   position: absolute;
   top: -60%;
   left: 0;
-  animation: moveCloud 30s cubic-bezier(.16,.26,.55,.23) infinite;
+  animation: moveCloud 30s cubic-bezier(.16, .26, .55, .23) infinite;
   z-index: 5000;
   width: 10%;
   height: 100%;
@@ -197,13 +217,13 @@ export default defineComponent({
 }
 
 @keyframes moveCloud {
-    0% {
-        left: -80%;
-    }
+  0% {
+    left: -80%;
+  }
 
-    100% {
-        left: 100%;
-    }
+  100% {
+    left: 100%;
+  }
 }
 
 
@@ -228,7 +248,6 @@ export default defineComponent({
   background-color: white;
 }
 
-/* Allgemeine Styling-Anpassungen für das Dropdown-Menü */
 .dropdown-menu {
   display: block;
   background-color: #1E88E5;
@@ -242,7 +261,6 @@ export default defineComponent({
   border-top: 3px solid #1E88E5;
 }
 
-/* Styling für die Buttons innerhalb des Dropdown-Menüs */
 .dropdown-menu ion-button {
   width: 100%;
   justify-content: flex-start;
@@ -254,7 +272,6 @@ export default defineComponent({
   transition: background-color 0.3s ease;
 }
 
-/* Hover-Effekt für die Buttons */
 .dropdown-menu ion-button:hover {
   background-color: #90CAF9;
 }
@@ -343,4 +360,5 @@ h1 {
 #statusIndicator {
   margin-left: auto;
   align-self: center;
-}</style>
+}
+</style>

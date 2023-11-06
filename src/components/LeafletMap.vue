@@ -96,7 +96,6 @@ export default defineComponent({
                     leafletMap.value.flyTo(center.value, zoom.value);
                 }
             } catch (error) {
-                console.error("Fehler beim Abrufen des aktuellen Standorts: ", error);
             } finally {
                 loading.value = false;
             }
@@ -114,12 +113,10 @@ export default defineComponent({
                 loading.value = false;
             } catch (error) {
                 loading.value = false;
-                console.error("Fehler beim Abrufen des aktuellen Standorts: ", error);
             }
         });
 
         function handleIconClick(data: any) {
-            console.log("Icon clicked!", data);
             selectedData.value = data;
             showModal.value = true;
         }
