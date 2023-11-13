@@ -22,6 +22,21 @@ const CO2_SERVICE = {
     ]
 };
 
+const TEMP_CO2_SERVICE = {
+    uuid: '7C97BB04-3D69-47A2-83D9-485ECFFB58D1',
+    characteristics: [
+        {
+            uuid: '5dc1191f-0350-4799-a4a8-a9e0eb067335',
+            properties: { notify: true, broadcast: true },
+            descriptors: [
+                {
+                    uuid: '656e6636-b999-4250-903b-2211d5e465c1',
+                }
+            ]
+        }
+    ]
+}
+
 const PM10_SERVICE = {
     uuid: '7C97BB04-3D69-47A2-83D9-485ECFFB58D1',
     characteristics: [
@@ -70,6 +85,7 @@ const TEMPERATURE_SERVICE = {
 // Alle Services in einer Liste
 const SERVICES = [
     CO2_SERVICE,
+    TEMP_CO2_SERVICE,
     PM10_SERVICE,
     PM25_SERVICE,
     TEMPERATURE_SERVICE
@@ -132,6 +148,33 @@ export function useBluetooth() {
                 }
             } else {
                 console.error("CO2 charakteristik nicht gefunden");
+            }
+
+            const temp_co2Characteristic = TEMP_CO2_SERVICE.characteristics.find(
+                (c) => c.uuid === '5dc1191f-0350-4799-a4a8-a9e0eb067335'
+            );
+
+            console.log('TEMP_CO2_Characteristik?: ' + temp_co2Characteristic?.uuid);
+            if (temp_co2Characteristic) {
+                try {
+                    BleClient.startNotifications(
+                        device.deviceId,
+                        TEMP_CO2_SERVICE.uuid,
+                        temp_co2Characteristic.uuid,
+                        (notifValue) => {
+                            console.log('TEMP_CO2_Benachrichtigung erhalten:');
+                            dataString = decoder.decode(notifValue.buffer);
+                            const value = parseFloat(dataString);
+                            store.commit('addtempCo2Value', value);
+                            store.commit('removeEmptyAndDuplicate');
+                            console.log("Aktuelle Werte im Vuex-Store: " + store.state.temp_co2Values);
+                        }
+                    );
+                } catch (error) {
+                    console.error('Fehler beim Starten der TEMP_CO2-Benachrichtigungen:', error);
+                }
+            } else {
+                console.error("TEMP_CO2 charakteristik nicht gefunden");
             }
 
             const pm10Characteristic = PM10_SERVICE.characteristics.find(
