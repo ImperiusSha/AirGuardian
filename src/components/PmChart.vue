@@ -12,7 +12,9 @@
                     </button>
                 </div>
             </div>
-            <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
+            <div class="chart-inner-container">
+                <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
+            </div>
         </div>
         <div class="icon-bar">
             <button class="custom-icon-button" @click="showInfoModal = true">
@@ -172,9 +174,9 @@ export default defineComponent({
                 }
 
 
-            // Erstellt Labels und Werte aus den Daten
-            const labels = data.map((entry: { timestamp: any; }) => entry.timestamp);
-            const values = data.map((entry: { value: any; }) => entry.value);
+                // Erstellt Labels und Werte aus den Daten
+                const labels = data.map((entry: { timestamp: any; }) => entry.timestamp);
+                const values = data.map((entry: { value: any; }) => entry.value);
 
                 // Füge die Labels und Werte zum chartData hinzu
                 chartData.value.labels = labels;
@@ -240,6 +242,12 @@ export default defineComponent({
 
         const chartOptions = computed(() => ({
             responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    right: 50,
+                }
+            },
             plugins: {
                 datalabels: {
                     color: '#000000',
@@ -415,6 +423,8 @@ export default defineComponent({
     align-items: flex-start;
     height: calc(100vh - 60px);
     overflow-y: auto;
+    width: 100%;
+    height: auto;
 }
 
 .chart-controls button {
@@ -523,10 +533,6 @@ export default defineComponent({
      .card {
          padding: 0.5rem;
      }
-
-     .info-container {
-         flex-direction: column;
-     }
  }
 
  .average-value {
@@ -586,11 +592,6 @@ export default defineComponent({
      width: 90%;
  }
 
- .pm-button:hover {
-     background-color: #555555;
-     color: white;
- }
-
  .modal {
      display: block;
      position: fixed;
@@ -624,6 +625,8 @@ export default defineComponent({
      box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
      border-radius: 8px;
      padding: 1rem;
+     width: 100%;
+     height: auto;
  }
 
  .button-container {
@@ -671,52 +674,58 @@ export default defineComponent({
      opacity: 50%;
  }
 
-  .icon-bar {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 50px;
-}
+ .icon-bar {
+     display: flex;
+     justify-content: space-between;
+     width: 100%;
+     margin-top: 50px;
+ }
 
  .custom-icon {
-  margin: 0 20px; /* Setzt einen gleichmäßigen Abstand zwischen den Icons */
-  font-size: 30px; /* Größe der Icons */
-  color: #7a7a7a;
-  border: 2px solid rgb(83, 140, 204);
-  border-radius: 50%;
-  padding: 15px;
-  background-color: transparent;
-  box-shadow: 0px 0px 4px #a2a2a2;
-  opacity: 80%;  
-}
+     margin: 0 20px;
+     font-size: 30px;
+     color: #7a7a7a;
+     border: 2px solid rgb(83, 140, 204);
+     border-radius: 50%;
+     padding: 15px;
+     background-color: transparent;
+     box-shadow: 0px 0px 4px #a2a2a2;
+     opacity: 80%;
+ }
 
  .custom-icon-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-}
+     background: none;
+     border: none;
+     cursor: pointer;
+ }
 
  .custom-icon:hover {
      color: #333;
      border-color: #333;
  }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+ .modal-overlay {
+     position: fixed;
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     background-color: rgba(0, 0, 0, 0.5);
+     display: flex;
+     justify-content: center;
+     align-items: center;
+ }
 
-.settings-modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 5px;
-}
+ .settings-modal-content {
+     background: white;
+     padding: 20px;
+     border-radius: 5px;
+ }
+
+ .chart-inner-container {
+     width: 100%;
+     height: auto;
+     margin: auto;
+ }
 </style>
 
