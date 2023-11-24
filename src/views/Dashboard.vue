@@ -13,16 +13,16 @@
                 </div>
             </div>
 
-            <div class="outer" @click="showChart('temp')">
-                <div class="inner" v-bind:class="{ open: currentChart === 'temp' }">
-                    <label class="label">TEMP</label>
+            <div class="outer" @click="showChart('atmo')">
+                <div class="inner" v-bind:class="{ open: currentChart === 'atmo' }">
+                    <label class="label_atmo">ATMO</label>
                 </div>
             </div>
 
         </div>
         <Co2Chart v-if="currentChart === 'co2'" />
         <PmChart v-if="currentChart === 'pm'" />
-        <TempChart v-if="currentChart === 'temp'" />
+        <AtmoChart v-if="currentChart === 'atmo'" />
     </div>
 </template>
 
@@ -30,6 +30,7 @@
 import { defineComponent, ref } from 'vue';
 import Co2Chart from '../components/Co2Chart.vue';
 import PmChart from '../components/PmChart.vue';
+import AtmoChart from '../components/AtmoChart.vue';
 import { useRouter } from 'vue-router';
 
 export default defineComponent({
@@ -37,6 +38,7 @@ export default defineComponent({
     components: {
         Co2Chart,
         PmChart,
+        AtmoChart
     },
     setup() {
         const savedChart = window.localStorage.getItem('selectedChart');
@@ -115,6 +117,15 @@ export default defineComponent({
 }
 .label {
     font-size: .7em;
+    text-transform: uppercase;
+    color: #7a7a7a;
+    transition: all .3s ease-in;
+    opacity: 1;
+    cursor: pointer;
+}
+
+.label_atmo {
+    font-size: .5em;
     text-transform: uppercase;
     color: #7a7a7a;
     transition: all .3s ease-in;
