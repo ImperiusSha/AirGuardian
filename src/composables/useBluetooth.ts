@@ -1,9 +1,6 @@
 import { BleClient, BleService } from '@capacitor-community/bluetooth-le';
 import { ref, onMounted } from 'vue';
-import { tempValue } from './values';
 import { useStore } from 'vuex'
-
-
 
 let deviceId = '';
 
@@ -82,13 +79,46 @@ const TEMPERATURE_SERVICE = {
     ]
 };
 
+const PRESS_SERVICE = {
+    uuid: '7C97BB04-3D69-47A2-83D9-485ECFFB58D1',
+    characteristics: [
+        {
+            uuid: 'a58239e5-aa19-4bf0-bd43-786ca3d5a1e3',
+            properties: { notify: true, broadcast: true },
+            descriptors: [
+                {
+                    uuid: 'fdffca3a-cc67-4335-a110-b6ffc48a566b',
+                }
+            ]
+        }
+    ]
+};
+
+const HUMID_SERVICE = {
+    uuid: '7C97BB04-3D69-47A2-83D9-485ECFFB58D1',
+    characteristics: [
+        {
+            uuid: '9e638ce2-f60e-4295-bbc9-d6282c2138f0',
+            properties: { notify: true, broadcast: true },
+            descriptors: [
+                {
+                    uuid: '1d3963f1-8d6d-4b62-b7c6-34f4214868cc',
+                }
+            ]
+        }
+    ]
+};
+
+
 // Alle Services in einer Liste
 const SERVICES = [
     CO2_SERVICE,
     TEMP_CO2_SERVICE,
     PM10_SERVICE,
     PM25_SERVICE,
-    TEMPERATURE_SERVICE
+    TEMPERATURE_SERVICE,
+    PRESS_SERVICE,
+    HUMID_SERVICE
 ];
 
 
@@ -237,12 +267,61 @@ export function useBluetooth() {
                         dataString = decoder.decode(notifValue.buffer);
                         console.log('Daten als String:', dataString);
                         const value = parseFloat(dataString);
-                        tempValue.value = value;
+                        store.commit('addTempValue', value);
+                        store.commit('removeEmptyAndDuplicate');
+                        console.log("Aktuelle Werte im Vuex-Store: " + store.state.tempValues);
                     }
                 );
             } else {
                 console.error("Temperature Charakteristik nicht gefunden");
             }
+
+            const pressCharacteristic = PRESS_SERVICE.characteristics.find(
+                (c) => c.uuid === 'a58239e5-aa19-4bf0-bd43-786ca3d5a1e3'
+            );
+            console.log('Press_Characteristik?: ' + pressCharacteristic?.uuid);
+            if (pressCharacteristic) {
+                BleClient.startNotifications(
+                    device.deviceId,
+                    PRESS_SERVICE.uuid,
+                    pressCharacteristic.uuid,
+                    (notifValue) => {
+                        console.log('Druck Benachrichtigung erhalten');
+                        dataString = decoder.decode(notifValue.buffer);
+                        console.log('Daten als String:', dataString);
+                        const value = parseFloat(dataString);
+                        store.commit('addPressValue', value);
+                        store.commit('removeEmptyAndDuplicate');
+                        console.log("Aktuelle Werte im Vuex-Store: " + store.state.pressValues);
+                    }
+                );
+            } else {
+                console.error("Druck Charakteristik nicht gefunden");
+            }
+
+            const humidCharacteristic = HUMID_SERVICE.characteristics.find(
+                (c) => c.uuid === '9e638ce2-f60e-4295-bbc9-d6282c2138f0'
+            );
+            console.log('Humid_Characteristik?: ' + humidCharacteristic?.uuid);
+            if (humidCharacteristic) {
+                BleClient.startNotifications(
+                    device.deviceId,
+                    HUMID_SERVICE.uuid,
+                    humidCharacteristic.uuid,
+                    (notifValue) => {
+                        console.log('Luftfeuchtigkeit Benachrichtigung erhalten');
+                        dataString = decoder.decode(notifValue.buffer);
+                        console.log('Daten als String:', dataString);
+                        const value = parseFloat(dataString);
+                        store.commit('addHumidValue', value);
+                        store.commit('removeEmptyAndDuplicate');
+                        console.log("Aktuelle Werte im Vuex-Store: " + store.state.humidValues);
+                    }
+                );
+            } else {
+                console.error("Luftfeuchtigkeit Charakteristik nicht gefunden");
+            }
+
             isConnected.value = true;
             console.log('isConnected am Ende:', isConnected.value);
 
