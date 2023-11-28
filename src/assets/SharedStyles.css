@@ -1,0 +1,271 @@
+/* SharedStyles.css */
+
+/* Keyframes und Animationen */
+@keyframes rotate {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Responsives Design */
+  @media (max-width: 768px) {
+    .card {
+      padding: 0.5rem;
+    }
+  }
+  
+  /* Loader Stil */
+  .loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid rgb(83, 140, 204);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    scale: 0.7;
+    animation: rotate 2s linear infinite;
+  }
+  
+  /* Durchschnittswert */
+  .average-value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 8%;
+    background-color: #fefefe;
+    border: 1px solid rgba(58, 209, 141, 0.9);
+    border-radius: 5px;
+    color: rgb(83, 140, 204);
+    bottom: -2%;
+    padding: 10px;
+    position: absolute;
+    margin-top: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0px 0px 8px #a2a2a2;
+    z-index: 100;
+  }
+  
+  .average-value span {
+    display: inline-block;
+  }
+  
+  .average-value span:after {
+    content: '\2022';
+    display: inline-block;
+    margin-left: 10px;
+    animation: spin 1s linear infinite;
+  }
+  
+  .average-value:not(.isLoading) span:after {
+    display: none;
+  }
+  
+  /* Modal Stile */
+  .info-modal {
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+  
+  .info-modal-content,
+  .settings-modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+  }
+  
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal {
+    display: block;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.654);
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .close-button {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  
+  .close-button:hover,
+  .close-button:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  /* Karte und Button-Container Stile */
+  .card {
+    background: #ffffff;
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    width: 100%;
+    height: auto;
+  }
+  
+  .button-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  
+  .button-container button {
+    background-color: #fefefe;
+    border: 1px solid rgb(218, 216, 216);
+    border-radius: 5px;
+    padding: 10px;
+    margin: 0 5px;
+    color: #7a7a7a;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  .button-container button.active:before,
+  .button-container button.active:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background-color: rgba(58, 209, 141, 0.9);
+  }
+  
+  .button-container button.active:before {
+    top: 0;
+  }
+  
+  .button-container button.active:after {
+    bottom: 0;
+  }
+  
+  .button-container button {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .button-container button:not(.active) {
+    opacity: 50%;
+  }
+  
+  /* Icon Bar Stile */
+  .icon-bar {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 50px;
+  }
+  
+  .custom-icon {
+    margin: 0 20px;
+    font-size: 30px;
+    color: #7a7a7a;
+    border: 2px solid rgb(83, 140, 204);
+    border-radius: 50%;
+    padding: 15px;
+    background-color: transparent;
+    box-shadow: 0px 0px 4px #a2a2a2;
+    opacity: 80%;
+  }
+  
+  .custom-icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .custom-icon:hover {
+    color: #333;
+    border-color: #333;
+  }
+  
+  /* Diagramm-Button Stile */
+
+.outer {
+    position: relative;
+    order: 2;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.inner {
+    width: inherit;
+    height: inherit;
+    text-align: center;
+    line-height: 30px;
+}
+
+.inner:before,
+.inner:after {
+    position: absolute;
+    content: '';
+    height: 1px;
+    width: inherit;
+    left: 0;
+    transition: all .3s ease-in;
+}
+
+.inner:before {
+    top: 0;
+    transform: rotate(0);
+}
+
+.inner:after {
+    bottom: 0;
+    transform: rotate(0);
+}
+
+.inner.open:before {
+    top: 50%;
+    left: 49%;
+    background: rgba(58, 209, 141, 0.9);
+    transform: rotate(90deg);
+}
+
+.inner.open:after {
+    bottom: 50%;
+    left: -49%;
+    background: rgba(58, 209, 141, 0.9);
+    transform: rotate(-90deg);
+}
+
+.outer:has(.inner.open) {
+    background-color: #fefefe;
+    scale: 1.5;
+    opacity: 100%;
+    box-shadow: 0px 1px 2px #a2a2a2;
+}
+
+.inner.open .label {
+    color: rgb(83, 140, 204);
+}
