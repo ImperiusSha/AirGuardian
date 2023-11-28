@@ -77,7 +77,7 @@ export default defineComponent({
     },
     data() {
         return {
-            isLoading: true,  
+            isLoading: true,
             isError: false
         };
     },
@@ -160,18 +160,13 @@ export default defineComponent({
 
                 // Fügt die Labels und Werte zum chartData hinzu
                 chartData.value.labels = labels;
-                chartData.value.datasets.push({
+                chartData.value.datasets = [{
                     label: selectedAtmo.value,
                     data: values,
                     borderColor: selectedAtmo.value === 'TEMP' ? 'rgba(80,80,80,0.5)' : 'rgba(120,120,120,0.5)',
                     backgroundColor: 'rgba(75,75,75,0.1)',
                     fill: fill,
-                });
-
-            } else {
-                // Keine Daten gefunden
-                isLoading.value = false;
-                isError.value = true;
+                }];
             }
         };
 
@@ -202,7 +197,7 @@ export default defineComponent({
         onMounted(() => {
             // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
             noDataTimeout.value = window.setTimeout(() => {
-                if (isLoading.value) {
+                if (!store.state.isDataEverLoaded && isLoading.value) {
                     isLoading.value = false;
                     isError.value = true;
                 }
@@ -239,10 +234,7 @@ export default defineComponent({
         });
 
 
-        watch(selectedAtmo, () => {
-            chartOptions.value.scales.y.title.text = getYAxisTitle(selectedAtmo.value); // Aktualisiere die Y-Achsenbezeichnung
-            initializeChartData();
-        });
+
 
         // Funktion zur Bestimmung des Titels der Y-Achse
         function getYAxisTitle(atmoType: string) {
@@ -532,6 +524,11 @@ export default defineComponent({
                 console.error("Unable to write file", e);
             }
         }
+
+        watch(selectedAtmo, () => {
+            chartOptions.value.scales.y.title.text = getYAxisTitle(selectedAtmo.value); // Aktualisiere die Y-Achsenbezeichnung
+            initializeChartData();
+        }, { immediate: true });
 
 
         return {

@@ -19,7 +19,7 @@ function addToValues(state: any, key: string, value: number) {
             timestamp: new Date().toISOString(),
             value: value,
         });
-        if (values.length > 15) {
+        if (values.length > 10) {
             values.shift();
         }
     }
@@ -36,28 +36,36 @@ export default createStore({
         pressValues: [] as { timestamp: string, value: number }[],
         humidValues: [] as { timestamp: string, value: number }[],
         sensorData: [] as SensorDataPoint[],
+        isDataEverLoaded: false,
     },
     mutations: {
         addCo2Value(state, value: number) {
             addToValues(state, 'co2Values', value);
+            state.isDataEverLoaded = true;
         },
         addtempCo2Value(state, value: number) {
             addToValues(state, 'temp_co2Values', value);
+            state.isDataEverLoaded = true;
         },
         addPM10Value(state, value: number) {
             addToValues(state, 'pm10Values', value);
+            state.isDataEverLoaded = true;
         },
         addPM25Value(state, value: number) {
             addToValues(state, 'pm25Values', value);
+            state.isDataEverLoaded = true;
         },
         addTempValue(state, value: number) {
             addToValues(state, 'tempValues', value);
+            state.isDataEverLoaded = true;
         },
         addPressValue(state, value: number) {
             addToValues(state, 'pressValues', value);
+            state.isDataEverLoaded = true;
         },
         addHumidValue(state, value: number) {
             addToValues(state, 'humidValues', value);
+            state.isDataEverLoaded = true;
         },
         // Entfernt doppelt Einträge durch die Verwendung von new Set()
         // Filtert leere Werte durch die Verwendung von filter()

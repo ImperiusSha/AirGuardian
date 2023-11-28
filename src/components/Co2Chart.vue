@@ -4,12 +4,9 @@
         <div class="card">
             <div class="chart-controls">
                 <div class="button-container">
-                    <button @click="selectedCO2 = 'CO2';" v-bind:class="{ active: selectedCO2 === 'CO2' }">
-                        CO2
-                    </button>
-                    <button @click="selectedCO2 = 'Temp_CO2';" v-bind:class="{ active: selectedCO2 === 'Temp_CO2' }">
-                        TCO2
-                    </button>
+                    <button @click="setSelectedCO2('CO2')" v-bind:class="{ active: selectedCO2 === 'CO2' }">CO2</button>
+                    <button @click="setSelectedCO2('Temp_CO2')"
+                        v-bind:class="{ active: selectedCO2 === 'Temp_CO2' }">TCO2</button>
                 </div>
             </div>
             <div class="chart-inner-container">
@@ -63,7 +60,7 @@
 
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { LineChart } from 'vue-chart-3';
 import { IonIcon } from '@ionic/vue';
@@ -74,20 +71,6 @@ import { useStore } from 'vuex';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(Filler, LineController, LineElement, PointElement, LinearScale, Title, Tooltip, ChartDataLabels, Legend);
-
-// Benötigtes Interface, um Struktur von chartData zu repräsentieren
-// Wenn nicht vorhanden, interpretiert TS Werte als "never", da es
-// aus ChartData nicht die genauen Typen auslesen kann
-// interface LocalChartData {
-//     labels: string[];
-//     datasets: {
-//         label: string;
-//         data: number[];
-//         borderColor: string;
-//         backgroundColor: string;
-//         fill: boolean;
-//     }[];
-// }
 
 export default defineComponent({
     name: 'CO2Chart',
@@ -101,6 +84,12 @@ export default defineComponent({
             isError: false
         };
     },
+    methods: {
+        setSelectedCO2(type: string) {
+            this.selectedCO2 = type;
+        },
+    },
+
     // Verwendung des "reactive"-Werkzeug von Vue 3, um reaktive Dateneigenschaft herzustellen
     // Ermöglicht die automatische Aktualisierung des Diagrammes bei Änderungen der Werte
     // eines Objektes, da dieses reaktiv gemacht wurde
@@ -145,7 +134,7 @@ export default defineComponent({
 
         const initializeChartData = () => {
             // Leert die Datasets
-            chartData.value.datasets = [];
+            // chartData.value.datasets = [];
 
             // Wählt die Daten basierend auf dem ausgewählten CO2-Wert
             const data = selectedCO2.value === 'CO2' ? store.state.co2Values : store.state.temp_co2Values;
@@ -164,13 +153,13 @@ export default defineComponent({
 
                 // Füge die Labels und Werte zum chartData hinzu
                 chartData.value.labels = labels;
-                chartData.value.datasets.push({
+                chartData.value.datasets = [{
                     label: selectedCO2.value,
                     data: values,
                     borderColor: selectedCO2.value === 'CO2' ? 'rgba(80,80,80,0.5)' : 'rgba(120,120,120,0.5)',
                     backgroundColor: 'rgba(75,75,75,0.1)',
                     fill: true,
-                });
+                }];
 
                 // Die Logik zur Bestimmung des maxY-Wertes muss entsprechend angepasst werden, um das Maximum sowohl aus CO2- als auch TEMP_CO2-Werten zu bestimmen.
                 const allValues = chartData.value.datasets.reduce((acc, dataset) => acc.concat(dataset.data), [] as number[]);
@@ -185,10 +174,6 @@ export default defineComponent({
                 } else if (maxValue > 3000) {
                     maxY.value = maxValue;  // Wenn der Wert 3000 übersteigt, passt sich das Diagramm entsprechend an.
                 }
-            } else {
-                // Keine Daten gefunden
-                isLoading.value = false;  // Beende den Ladezustand
-                isError.value = true;  // Setze Fehlerzustand
             }
         };
 
@@ -201,10 +186,11 @@ export default defineComponent({
         });
 
 
+
         onMounted(() => {
             // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
             noDataTimeout.value = window.setTimeout(() => {
-                if (isLoading.value) {
+                if (!store.state.isDataEverLoaded && isLoading.value) {
                     isLoading.value = false;
                     isError.value = true;
                 }
@@ -215,12 +201,15 @@ export default defineComponent({
                     lastAddedValue = store.state.co2Values[store.state.co2Values.length - 1].value;
                     initializeChartData();
                 }
-            }, 10); // jede 10 Sekunden
+            }, 1000); // jede 10 Sekunden
         });
 
-        watch(selectedCO2, () => {
-            initializeChartData();
-        });
+        watch(selectedCO2, (newVal, oldVal) => {
+            if (newVal !== oldVal) {
+                initializeChartData();
+            }
+        }, { immediate: true });
+
 
         const chartOptions = computed(() => ({
             responsive: true,
@@ -241,8 +230,12 @@ export default defineComponent({
                     align: 'top',
                     offset: 10,
                     formatter: (value: any, ctx: { dataset: { data: { [x: string]: any; }; }; dataIndex: string | number; }) => {
-                        return ctx.dataset.data[ctx.dataIndex];
+                        const val = ctx.dataset.data[ctx.dataIndex];
+                        // Prüfen Sie, ob der Wert null oder undefined ist und geben Sie in diesem Fall null zurück
+                        return (val !== null && val !== undefined) ? val : null;
                     },
+
+
                 },
                 legend: {
                     display: false,
@@ -291,7 +284,7 @@ export default defineComponent({
                             size: 16,
                             weight: 500
                         },
-                        
+
                     }
                 },
                 y: {
