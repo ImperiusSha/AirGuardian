@@ -4,12 +4,8 @@
         <div class="card">
             <div class="chart-controls">
                 <div class="button-container">
-                    <button @click="selectedPM = 'PM10';" v-bind:class="{ active: selectedPM === 'PM10' }">
-                        PM10
-                    </button>
-                    <button @click="selectedPM = 'PM2.5';" v-bind:class="{ active: selectedPM === 'PM2.5' }">
-                        PM2.5
-                    </button>
+                    <button @click="setSelectedPM('PM10')" v-bind:class="{ active: selectedPM === 'PM10' }">PM10</button>
+                    <button @click="setSelectedPM('PM2.5')" v-bind:class="{ active: selectedPM === 'PM2.5' }">PM2.5</button>
                 </div>
             </div>
             <div class="chart-inner-container">
@@ -114,6 +110,11 @@ export default defineComponent({
             isError: false
         };
     },
+    methods: {
+        setSelectedPM(type: string) {
+            this.selectedPM = type;
+        },
+    },
     // Verwendung des "reactive"-Werkzeug von Vue 3, um reaktive Dateneigenschaft herzustellen
     // Ermöglicht die automatische Aktualisierung des Diagrammes bei Änderungen der Werte
     // eines Objektes, da dieses reaktiv gemacht wurde
@@ -180,13 +181,13 @@ export default defineComponent({
 
                 // Füge die Labels und Werte zum chartData hinzu
                 chartData.value.labels = labels;
-                chartData.value.datasets.push({
+                chartData.value.datasets = [{
                     label: selectedPM.value,
                     data: values,
                     borderColor: selectedPM.value === 'PM10' ? 'rgba(80,80,80,0.5)' : 'rgba(120,120,120,0.5)',
                     backgroundColor: 'rgba(75,75,75,0.1)',
                     fill: true,
-                });
+                }];
 
                 // Die Logik zur Bestimmung des maxY-Wertes muss entsprechend angepasst werden, um das Maximum sowohl aus PM10- als auch PM2.5-Werten zu bestimmen.
                 const allValues = chartData.value.datasets.reduce((acc, dataset) => acc.concat(dataset.data), [] as number[]);
@@ -203,10 +204,6 @@ export default defineComponent({
                 } else if (maxValue > 350) {
                     maxY.value = maxValue;  // Wenn der Wert 350 übersteigt, passt sich das Diagramm entsprechend an.
                 }
-            } else {
-                // Keine Daten gefunden
-                isLoading.value = false;  // Beende den Ladezustand
-                isError.value = true;  // Setze Fehlerzustand
             }
         };
 
@@ -221,7 +218,7 @@ export default defineComponent({
         onMounted(() => {
             // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
             noDataTimeout.value = window.setTimeout(() => {
-                if (isLoading.value) {
+                if (!store.state.isDataEverLoaded && isLoading.value) {
                     isLoading.value = false;
                     isError.value = true;
                 }
@@ -236,9 +233,12 @@ export default defineComponent({
         });
 
 
-        watch(selectedPM, () => {
-            initializeChartData();
-        });
+        watch(selectedPM, (newVal, oldVal) => {
+            if (newVal !== oldVal) {
+                initializeChartData();
+            }
+        }, { immediate: true });
+
 
         const chartOptions = computed(() => ({
             responsive: true,
