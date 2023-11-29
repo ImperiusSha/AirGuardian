@@ -2,25 +2,15 @@
   <div>
     <!-- Beginn der NavBar -->
     <div class="navbar">
-      <div class="cloud"></div>
+      <!-- <div class="cloud"></div> -->
       <div class="navbar-content">
         <input type="checkbox" id="checkbox2" class="checkbox2 visuallyHidden" v-model="menuOpen">
-        <!-- <label :class="{ 'hamburger-disabled': !isConnected }" for="checkbox2">
-          <div class="hamburger hamburger2">
-            <span class="bar bar1"></span>
-            <span class="bar bar2"></span>
-            <span class="bar bar3"></span>
-            <span class="bar bar4"></span>
-          </div>
-        </label> -->
         <h1 class="navbar-title">Air Guardian</h1>
         <ion-button fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
           @click="showModal = true"></ion-button>
       </div>
-      <div v-if="menuOpen" class="dropdown-menu">
-        <ion-button @click="goToHomePage">Startseite</ion-button>
-        <ion-button @click="goToDashboard">Dashboard</ion-button>
-        <ion-button @click="goToMap">Karte</ion-button>
+      <div v-for="cloud in clouds" :key="cloud.id" class="cloud" :style="{ 'left': cloudPosition(cloud.id) + '%' }">
+        <span class="cloud-value">{{ cloud.value }}</span>
       </div>
     </div>
     <!-- Ende der NavBar -->
@@ -37,18 +27,18 @@
         </div>
       </div>
     </div>
-
     <router-view></router-view>
   </div>
 </template>
 
 
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import { IonButton, IonCheckbox } from '@ionic/vue';
 import { useRouter } from 'vue-router';
 import { useBluetooth } from './composables/useBluetooth';
 import useStatusIndicator from './composables/useStatusIndicator';
+import { useStore } from 'vuex';
 
 export default defineComponent({
   name: 'App',
@@ -62,6 +52,22 @@ export default defineComponent({
     const { isConnectedIndicator } = useStatusIndicator();
     const showModal = ref(false);
     const menuOpen = ref(false);
+    const store = useStore();
+    const clouds = computed(() => store.getters.clouds);
+
+        // Beispiel für eine Funktion, um die Position der Wolke zu berechnen
+        function cloudPosition(id: number) {
+      // Hier würde Ihre Logik stehen, um die Position der Wolke basierend auf der ID oder Zeit zu berechnen
+      return (id % 100) * 10; // Beispiel: Position basierend auf der ID
+    }
+
+    // Beobachten Sie die Werte und erstellen Sie Wolken, wenn neue Werte hinzugefügt werden
+    watch(() => store.state.co2Values, (newValues) => {
+      if (newValues.length > 0) {
+        const latestValue = newValues[newValues.length - 1];
+        store.dispatch('createCloudWithValue', { type: 'co2', value: latestValue.value });
+      }
+    }, { deep: true });
 
     const toggleMenu = () => {
       if (isConnected.value) {
@@ -114,35 +120,84 @@ export default defineComponent({
       goToHomePage,
       goToMap,
       toggleMenu,
-      menuOpen
+      menuOpen,
+      clouds,
+      cloudPosition
     };
   },
 });
 </script>
 
 
-<style>
+<style scoped>
 #diagramButton {
   top: 0;
   left: 0;
 }
 
-/* Für Bildschirmgrößen bis zu 768px */
-@media (max-width: 768px) {
+/* Responsive Styles */
+@media only screen and (max-width: 600px) {
+  .navbar-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar-title {
+    font-size: 20px;
+    margin-bottom: 5px;
+  }
+
   .dropdown-menu {
-    width: 90%;
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 10% auto;
+  }
+
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
-/* Für Bildschirmgrößen bis zu 1024px */
-@media (max-width: 1024px) and (min-width: 769px) {
+@media only screen and (min-width: 601px) and (max-width: 900px) {
+  .dropdown-menu {
+    width: 50%;
+  }
+
+  .modal-content {
+    width: 70%;
+  }
+}
+
+@media only screen and (min-width: 901px) and (max-width: 1200px) {
+  .dropdown-menu {
+    width: 40%;
+  }
+
+  .modal-content {
+    width: 60%;
+  }
+}
+
+@media only screen and (min-width: 1201px) {
   .dropdown-menu {
     width: 30%;
   }
-}
-</style>
 
-<style scoped>
+  .modal-content {
+    width: 50%;
+  }
+}
+
+/* Styles für Modale und Navbar */
 .modal {
   display: flex;
   justify-content: center;
@@ -154,9 +209,9 @@ export default defineComponent({
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgb(0, 0, 0);
   background-color: rgba(0, 0, 0, 0.4);
 }
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -173,7 +228,7 @@ export default defineComponent({
 }
 
 .close-button {
-  margin-left: auto; 
+  margin-left: auto;
   color: #aaa;
   font-size: 28px;
   font-weight: bold;
@@ -192,11 +247,11 @@ export default defineComponent({
 }
 
 h2 {
-  margin: 0; 
-  flex-grow: 1; 
+  margin: 0;
+  flex-grow: 1;
 }
 
-
+/* Navbar Hintergrund und Cloud Animation */
 .navbar {
   background-image: linear-gradient(to top, rgba(58, 209, 141, 0.9) 2%, rgb(218, 216, 216) 10%, rgb(83, 140, 204) 60%);
   position: relative;
@@ -206,12 +261,10 @@ h2 {
 .cloud {
   background-image: url('/images/clouds.png');
   position: absolute;
-  top: -60%;
   left: 0;
   animation: moveCloud 30s cubic-bezier(.16, .26, .55, .23) infinite;
-  z-index: 5000;
-  width: 10%;
-  height: 100%;
+  width: 30px;
+  height: 20px;
   background-size: contain;
   transform: scale(0.8);
 }
@@ -220,13 +273,37 @@ h2 {
   0% {
     left: -80%;
   }
-
   100% {
     left: 100%;
   }
 }
 
+/* Anpassung der Cloud an diverse Formate */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cloud {
+    width: 50px;
+  }
+}
 
+@media (min-width: 1025px) {
+  .cloud {
+    top: -5px;
+    width: 76px;
+    height: 100%;
+  }
+}
+
+/* Style für die Cloud-Value */
+.cloud-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.4rem;
+  color: #333;
+}
+
+/* Styles für Navbar */
 .navbar-content {
   display: flex;
   justify-content: space-between;
@@ -240,40 +317,6 @@ h2 {
   font-size: 24px;
   margin: 0;
   cursor: pointer;
-}
-
-.bar {
-  width: 25px;
-  height: 3px;
-  background-color: white;
-}
-
-.dropdown-menu {
-  display: block;
-  background-color: #1E88E5;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  border-radius: 0px;
-  z-index: 1001;
-  width: 30%;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  border-top: 3px solid #1E88E5;
-}
-
-.dropdown-menu ion-button {
-  width: 100%;
-  justify-content: flex-start;
-  padding: 10px 20px;
-  background-color: #BBDEFB;
-  color: white;
-  border: none;
-  text-align: left;
-  transition: background-color 0.3s ease;
-}
-
-.dropdown-menu ion-button:hover {
-  background-color: #90CAF9;
 }
 
 .visuallyHidden {
@@ -291,72 +334,9 @@ h1 {
   text-align: center;
 }
 
-.container {
-  width: 70%;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-}
 
-.hamburger {
-  margin: 0 auto;
-  width: 30px;
-  height: 30px;
-  position: relative;
-  margin-right: 15px;
-}
 
-.hamburger-disabled {
-  opacity: 0.25;
-  pointer-events: none;
-}
-
-.hamburger .bar {
-  padding: 0;
-  width: 30px;
-  height: 4px;
-  background-color: #ddd;
-  display: block;
-  border-radius: 4px;
-  transition: all 0.4s ease-in-out;
-  position: absolute;
-}
-
-.bar1 {
-  top: 0;
-}
-
-.bar2,
-.bar3 {
-  top: 13.5px;
-}
-
-.bar3 {
-  right: 0;
-}
-
-.bar4 {
-  bottom: 0;
-}
-
-.checkbox2:checked+label>.hamburger2>.bar1 {
-  transform: translateX(40px);
-  background-color: transparent;
-}
-
-.checkbox2:checked+label>.hamburger2>.bar2 {
-  transform: rotate(45deg);
-}
-
-.checkbox2:checked+label>.hamburger2>.bar3 {
-  transform: rotate(-45deg);
-}
-
-.checkbox2:checked+label>.hamburger2>.bar4 {
-  transform: translateX(-40px);
-  background-color: transparent;
-}
-
+/* Status indicator positioning */
 #statusIndicator {
   margin-left: auto;
   align-self: center;

@@ -269,3 +269,160 @@
 .inner.open .label {
     color: rgb(83, 140, 204);
 }
+
+/* Responsives Design */
+
+/* Für kleine Geräte wie Handys */
+@media (max-width: 600px) {  
+    .card {
+      padding: 0.5rem;
+    }
+  
+    .loader {
+      width: 40px;
+      height: 40px;
+    }
+  
+    .average-value {
+      font-size: 18px;
+      padding: 8px;
+    }
+    
+    .button-container button {
+      padding: 12px;
+      margin: 0 3px;
+    }
+  
+    .info-modal-content,
+    .settings-modal-content {
+      width: 100%;
+      margin: 10% auto;
+      padding: 10px;
+    }
+  }
+  
+  /* Für mittlere Geräte wie Tablets */
+  @media (min-width: 601px) and (max-width: 1024px) {
+    .card {
+      padding: 1rem;
+    }
+  
+    .average-value {
+      font-size: 20px;
+      padding: 12px;
+    }
+  }
+  
+  /* Für größere Geräte wie Desktops */
+  @media (min-width: 1025px) {
+
+  }
+  
+  /* Dashboard.vue - Ergänzungen */
+  
+  /* Anpassungen für die Buttons im Dashboard */
+  @media (max-width: 600px) {
+    .buttons .outer {
+      margin: 5px;
+      padding: 5px;
+    }
+  
+    .buttons .label {
+      font-size: .6em;
+    }
+    
+    .buttons .label_atmo {
+      font-size: .4em;
+    }
+  }
+  
+  @media (min-width: 601px) and (max-width: 1024px) {
+    .buttons .outer {
+      margin: 8px;
+      padding: 8px;
+    }
+  
+    .buttons .label,
+    .buttons .label_atmo {
+      font-size: .8em;
+    }
+  }
+  
+  @media (min-width: 1025px) {
+  }
+  
+  /* Setzt eine minimale Höhe für die Karten, damit sie nicht zu klein werden */
+.card {
+    min-height: 300px;
+  }
+  
+  /* Anpassung der Kartenhöhe abhängig von der Bildschirmgröße */
+  @media (max-width: 768px) {
+    .card {
+      min-height: 350px;
+    }
+  }
+  
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .card {
+      min-height: 400px;
+    }
+  }
+  
+  @media (min-width: 1025px) {
+    .card {
+      min-height: 600px;
+    }
+  }
+
+/* Anpassungen für die Buttons innerhalb der Card auf mobilen Geräten */
+@media (max-width: 768px) {
+    .button-container button {
+      padding: 10px 20px;
+      font-size: 0.9rem;
+    }
+  }
+  
+  /* Anpassungen für die Buttons innerhalb der Card auf Tablet-Geräten */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .button-container button {
+      padding: 12px 24px;
+      font-size: 1rem;
+    }
+  }
+  
+  /* Anpassungen für die Buttons innerhalb der Card auf Desktop-Geräten */
+  @media (min-width: 1025px) {
+    .button-container button {
+      padding: 14px 28px;
+      font-size: 1.1rem;
+    }
+  }
+  
+  /* Anpassungen für CO2, PM und ATMO Buttons auf mobilen Geräten */
+@media (max-width: 768px) {
+    .dashboard .outer {
+      width: 30px;
+      height: 30px;
+      font-size: 0.7rem;
+    }
+  }
+  
+  /* Anpassungen für CO2, PM und ATMO Buttons auf Tablet-Geräten */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .dashboard .outer {
+      width: 40px;
+      height: 40px;
+      font-size: 0.8rem;
+    }
+  }
+  
+  /* Anpassungen für CO2, PM und ATMO Buttons auf Desktop-Geräten */
+  @media (min-width: 1025px) {
+    .dashboard .outer {
+      width: 50px;
+      height: 50px;
+      font-size: 1rem;
+    }
+  }
+  
