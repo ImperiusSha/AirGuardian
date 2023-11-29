@@ -11,6 +11,12 @@ interface SensorDataPoint {
     value?: number;
 }
 
+interface Cloud {
+    type: string;
+    value: number;
+    id: number;
+}
+
 // Funktion, um Werte zu einem bestimmten Array hinzuzufügen und zu begrenzen
 function addToValues(state: any, key: string, value: number) {
     const values = state[key];
@@ -37,6 +43,7 @@ export default createStore({
         humidValues: [] as { timestamp: string, value: number }[],
         sensorData: [] as SensorDataPoint[],
         isDataEverLoaded: false,
+        clouds: [] as Cloud[],
     },
     mutations: {
         addCo2Value(state, value: number) {
@@ -92,14 +99,23 @@ export default createStore({
         ADD_LOCATION_AND_DATA(state, payload) {
             state.sensorData.push(payload);
         },
+        CREATE_CLOUD_WITH_VALUE(state, payload: Cloud) {
+            if (!state.clouds.length || state.clouds[state.clouds.length - 1].value !== payload.value) {
+                state.clouds.push(payload);
+            }
+        },
     },
     actions: {
         addLocationAndData({ commit }, payload) {
             commit('ADD_LOCATION_AND_DATA', payload);
         },
+        createCloudWithValue({ commit }, payload) {
+            commit('CREATE_CLOUD_WITH_VALUE', payload);
+        },
     },
     getters: {
         sensorData: (state) => state.sensorData,
+        clouds: (state) => state.clouds,
     },
     modules: {},
 });
