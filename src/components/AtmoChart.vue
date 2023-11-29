@@ -554,7 +554,7 @@ export default defineComponent({
     }
 })
 </script>
-<style>
+<style scoped>
 @import "@/assets/SharedStyles.css";
 
  .chart-inner-container {
