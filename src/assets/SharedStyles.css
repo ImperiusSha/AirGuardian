@@ -270,6 +270,92 @@
     color: rgb(83, 140, 204);
 }
 
+  
+.shepherd-content {
+  background-color: #fefefe;
+  border: 1px solid rgba(58, 209, 141, 0.9);
+  border-radius: 5px;
+  color: rgb(83, 140, 204);
+  box-shadow: 0px 0px 8px #a2a2a2;
+}
+
+.shepherd-text {
+  font-size: 16px;
+  padding: 10px;
+}
+
+.shepherd-button {
+  background-color: #ffffff !important;
+  color: #333 !important;
+  border: none !important;
+  padding: 10px 15px !important;
+  margin: 5px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.shepherd-button::before,
+.shepherd-button::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: rgba(58, 209, 141, 0.9);
+}
+
+.shepherd-button::before {
+  top: 0;
+}
+
+.shepherd-button::after {
+  bottom: 0;
+}
+
+/* Hover-Effekt für die Buttons */
+.shepherd-button:hover {
+  background-color: #e6e6e6; /* Etwas dunklerer Hintergrund beim Hover */
+}
+
+.shepherd-header {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* Status Indicator Tutorial */
+.status-indicator-img {
+  width: 10vw;
+  height: auto;
+  max-width: 100px;
+  margin: 5px 0;
+}
+
+.tutorial-status-indicator span {
+  display: block;
+}
+
+.swipe-gif {
+  max-width: 100%;
+  height: auto;
+}
+
+.tutorial-background {
+  text-align: center;
+}
+
+.tutorial-background span {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.background-good,
+.background-medium,
+.background-bad {
+  max-width: 100%;
+  height: auto;
+}
+
+
 /* Responsives Design */
 
 /* Für kleine Geräte wie Handys */
@@ -425,4 +511,36 @@
       font-size: 1rem;
     }
   }
-  
+
+  /* Anpassung für Swipe-Tutorial */
+  @media (max-width: 600px) {
+    .swipe-gif {
+      max-width: 50%;
+      height: auto;
+    }
+  }
+
+  /* Anpassung für Background-Tutorial */
+@media (max-width: 600px) {
+  .background-good,
+  .background-medium,
+  .background-bad {
+    max-width: 20%;
+    height: auto;
+  }
+}
+
+/* Styling für die Weiter-Button */
+.shepherd-button {
+  background-color: rgba(58, 209, 141, 0.9);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  margin-top: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.shepherd-button:hover {
+  background-color: rgba(58, 209, 141, 1);
+}
