@@ -1,11 +1,25 @@
 <!-- Co2Chart.vue -->
 <template>
     <div class="chart-container">
-        <div class="info-container">
-            <button v-if="showChart" @click="showModal = true">Wissenswertes zu den Co2-Werten</button>
-            <div v-if="showModal" class="modal" @click.self="closeModals">
-                <div class="modal-content" @click.stop>
-                    <span class="close-button" @click="showModal = false">&times;</span>
+        <div class="card">
+            <div class="chart-controls">
+                <div class="button-container">
+                    <button @click="setSelectedCO2('CO2')" v-bind:class="{ active: selectedCO2 === 'CO2' }">CO2</button>
+                    <button @click="setSelectedCO2('Temp_CO2')"
+                        v-bind:class="{ active: selectedCO2 === 'Temp_CO2' }">TCO2</button>
+                </div>
+            </div>
+            <div class="chart-inner-container">
+                <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
+            </div>
+        </div>
+        <div class="icon-bar">
+            <button class="custom-icon-button" @click="showInfoModal = true">
+                <i class="fas fa-info-circle custom-icon"></i>
+            </button>
+            <div v-if="showInfoModal" class="modal info-modal" @click.self="closeModals">
+                <div class="info-modal-content" @click.stop>
+                    <span class="close-button" @click="showInfoModal = false">&times;</span>
                     <h2>Wissenswertes zu den CO2-Werten</h2>
                     <p>PPM steht für <b>"parts per million"</b> (Teile pro Million).
                         Es wird verwendet, um die Konzentration von Substanzen in der Luft oder in Flüssigkeiten
@@ -23,113 +37,230 @@
                         Kopfschmerzen, Schläfrigkeit und mangelnde Konzentration können auftreten.</p>
                 </div>
             </div>
+            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
+            <button class="custom-icon-button" @click="showSettingsModal = true">
+                <i class="fas fa-cog custom-icon"></i>
+            </button>
+            <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeModals">
+                <div class="modal-content settings-modal-content" @click.stop>
+                    <span class="close-button" @click="showSettingsModal = false">&times;</span>
+                </div>
+            </div>
         </div>
-        <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
+        <p class="average-value">
+            <span v-if="isLoading">
+                <div class="loader"></div>
+            </span>
+            <span v-else-if="isError">Daten nicht verfügbar</span>
+            <span v-else>Durchschnittswert: {{ averageValue }}</span>
+        </p>
     </div>
 </template>
 
+
+
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { LineChart } from 'vue-chart-3';
-import { Filler, Chart as ChartJS, LineController, LineElement, LinearScale, PointElement, Title, Tooltip } from 'chart.js';
+import { IonIcon } from '@ionic/vue';
+import { shareOutline } from 'ionicons/icons';
+import { Share } from '@capacitor/share';
+import { Filler, Chart as ChartJS, LineController, LineElement, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { useStore } from 'vuex';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-ChartJS.register(Filler, LineController, LineElement, PointElement, LinearScale, Title, Tooltip, ChartDataLabels);
-
-// Benötigtes Interface, um Struktur von chartData zu repräsentieren
-// Wenn nicht vorhanden, interpretiert TS Werte als "never", da es
-// aus ChartData nicht die genauen Typen auslesen kann
-interface LocalChartData {
-    labels: string[];
-    datasets: {
-        label: string;
-        data: number[];
-        borderColor: string;
-        backgroundColor: string;
-        fill: boolean;
-    }[];
-}
+ChartJS.register(Filler, LineController, LineElement, PointElement, LinearScale, Title, Tooltip, ChartDataLabels, Legend);
 
 export default defineComponent({
-    name: 'Co2Chart',
+    name: 'CO2Chart',
     components: {
-        LineChart
+        LineChart,
+        IonIcon
     },
+    data() {
+        return {
+            isLoading: true,  // Startet im Ladezustand
+            isError: false
+        };
+    },
+    methods: {
+        setSelectedCO2(type: string) {
+            this.selectedCO2 = type;
+        },
+    },
+
     // Verwendung des "reactive"-Werkzeug von Vue 3, um reaktive Dateneigenschaft herzustellen
     // Ermöglicht die automatische Aktualisierung des Diagrammes bei Änderungen der Werte
     // eines Objektes, da dieses reaktiv gemacht wurde
     setup() {
-        console.log("Im Setup von defineComponent_Co2Chart angekommen.");
         const store = useStore();
         const showChart = ref(true);
         const maxY = ref(1000);
-        const showModal = ref(false);
+        const showInfoModal = ref(false);
+        const showSettingsModal = ref(false);
         let lastAddedValue: null = null;
+        const selectedCO2 = ref('CO2');
+        const chartTitle = computed(() => `${selectedCO2.value}-Diagramm`);
         const closeModals = () => {
-            showModal.value = false;
+            showInfoModal.value = false;
+            showSettingsModal.value = false;
         };
+        const isActive = ref(false);
+        const isLoading = ref(true);
+        const isError = ref(false);
+        const noDataTimeout = ref<number | null>(null);
 
-        const chartData = ref<LocalChartData>({
+        type Dataset = {
+            label: string,
+            data: number[],
+            borderColor: string,
+            backgroundColor: string,
+            fill: boolean,
+        }
+
+        const chartData = ref<{ labels: string[], datasets: Dataset[] }>({
             labels: [],
             datasets: [
                 {
                     label: 'CO2',
                     data: store.state.co2Values,
-                    borderColor: 'rgba(175,150,20,0.6)',
-                    backgroundColor: 'rgba(175,192,92,0.2)',
+                    borderColor: 'rgba(100,100,100,0.6)',
+                    backgroundColor: 'rgba(75,75,75,0.2)',
                     fill: true,
                 },
             ],
         });
 
-
         const initializeChartData = () => {
-            chartData.value.labels = store.state.co2Values.map((entry: { timestamp: any; }) => entry.timestamp);
-            chartData.value.datasets[0].data = store.state.co2Values.map((entry: { value: any; }) => entry.value);
-            const maxCo2Value = Math.max(...chartData.value.datasets[0].data);
+            // Leert die Datasets
+            // chartData.value.datasets = [];
 
-            if (maxCo2Value <= 1000) {
-                maxY.value = 1000;
-            } else if (maxCo2Value > 1000 && maxCo2Value <= 2000) {
-                maxY.value = 2000;
-            } else if (maxCo2Value > 2000 && maxCo2Value <= 3000) {
-                maxY.value = 3000;
-            } else if (maxCo2Value > 3000) {
-                maxY.value = maxCo2Value;  // Wenn der CO2-Wert 3000 übersteigt, passt sich das Diagramm entsprechend an.
+            // Wählt die Daten basierend auf dem ausgewählten CO2-Wert
+            const data = selectedCO2.value === 'CO2' ? store.state.co2Values : store.state.temp_co2Values;
+
+            // Überprüfe, ob Daten vorhanden sind
+            if (data && data.length > 0) {
+                isLoading.value = false;  // Beende den Ladezustand
+                isError.value = false;  // Setze Fehlerzustand zurück
+                if (noDataTimeout.value !== null) {
+                    clearTimeout(noDataTimeout.value);
+                }
+
+                // Erstellt Labels und Werte aus den Daten
+                const labels = data.map((entry: { timestamp: any; }) => entry.timestamp);
+                const values = data.map((entry: { value: any; }) => entry.value);
+
+                // Füge die Labels und Werte zum chartData hinzu
+                chartData.value.labels = labels;
+                chartData.value.datasets = [{
+                    label: selectedCO2.value,
+                    data: values,
+                    borderColor: selectedCO2.value === 'CO2' ? 'rgba(80,80,80,0.5)' : 'rgba(120,120,120,0.5)',
+                    backgroundColor: 'rgba(75,75,75,0.1)',
+                    fill: true,
+                }];
+
+                // Die Logik zur Bestimmung des maxY-Wertes muss entsprechend angepasst werden, um das Maximum sowohl aus CO2- als auch TEMP_CO2-Werten zu bestimmen.
+                const allValues = chartData.value.datasets.reduce((acc, dataset) => acc.concat(dataset.data), [] as number[]);
+                const maxValue = Math.max(...allValues);
+
+                if (maxValue <= 1000) {
+                    maxY.value = 1000;
+                } else if (maxValue > 1000 && maxValue <= 2000) {
+                    maxY.value = 2000;
+                } else if (maxValue > 2000 && maxValue <= 3000) {
+                    maxY.value = 3000;
+                } else if (maxValue > 3000) {
+                    maxY.value = maxValue;  // Wenn der Wert 3000 übersteigt, passt sich das Diagramm entsprechend an.
+                }
             }
         };
 
+        // Berechnet den Durchschnitt der ausgewählten CO2-Werte
+        const averageValue = computed(() => {
+            const data = selectedCO2.value === 'CO2' ? store.state.co2Values : store.state.temp_co2Values;
+            const values = data.map((entry: { value: any; }) => entry.value);
+            const sum = values.reduce((a: number, b: number) => a + b, 0);
+            return (sum / values.length).toFixed(2); // 2 Nachkommastellen
+        });
+
+
 
         onMounted(() => {
+            // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
+            noDataTimeout.value = window.setTimeout(() => {
+                if (!store.state.isDataEverLoaded && isLoading.value) {
+                    isLoading.value = false;
+                    isError.value = true;
+                }
+            }, 60000);  // Wartezeit von 1 Minute, kann angepasst werden
+
             setInterval(() => {
                 if (store.state.co2Values.length > 0 && store.state.co2Values[store.state.co2Values.length - 1].value !== lastAddedValue) {
                     lastAddedValue = store.state.co2Values[store.state.co2Values.length - 1].value;
                     initializeChartData();
                 }
-            }, 10); // jede 10 Sekunden
+            }, 1000); // jede 10 Sekunden
         });
+
+        watch(selectedCO2, (newVal, oldVal) => {
+            if (newVal !== oldVal) {
+                initializeChartData();
+            }
+        }, { immediate: true });
+
 
         const chartOptions = computed(() => ({
             responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    right: 50,
+                }
+            },
             plugins: {
-                title: {
-                    display: true,
-                    text: 'CO2-Diagramm',
-                },
                 datalabels: {
                     color: '#000000',
-                    backgroundColor: 'rgba(255,255,255,0.8)', 
-                    borderColor: 'rgba(0,0,0,0.5)',  
-                    borderRadius: 4,  
-                    borderWidth: 1,  
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    borderColor: 'rgba(0,0,0,0.5)',
+                    borderRadius: 4,
+                    borderWidth: 1,
                     anchor: 'start',
-                    align: 'top', 
-                    offset: 10, 
+                    align: 'top',
+                    offset: 10,
                     formatter: (value: any, ctx: { dataset: { data: { [x: string]: any; }; }; dataIndex: string | number; }) => {
-                        return ctx.dataset.data[ctx.dataIndex];
+                        const val = ctx.dataset.data[ctx.dataIndex];
+                        // Prüfen Sie, ob der Wert null oder undefined ist und geben Sie in diesem Fall null zurück
+                        return (val !== null && val !== undefined) ? val : null;
+                    },
+
+
+                },
+                legend: {
+                    display: false,
+                    position: 'top',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                zoom: {
+                    zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: 'xy',
                     },
                 },
+                animations: {
+                    tension: {
+                        duration: 1000,
+                        easing: 'linear',
+                        from: 1,
+                        to: 0,
+                        loop: true
+                    }
+                }
             },
             scales: {
                 x: {
@@ -139,7 +270,7 @@ export default defineComponent({
                         display: true,
                         unit: 'second',
                         displayFormats: {
-                            second: 'HH:mm:ss'
+                            second: 'HH:mm'
                         }
                     },
                     ticks: {
@@ -148,7 +279,12 @@ export default defineComponent({
                     },
                     title: {
                         display: true,
-                        text: 'Zeitangabe'
+                        text: 'Zeitangabe',
+                        font: {
+                            size: 16,
+                            weight: 500
+                        },
+
                     }
                 },
                 y: {
@@ -156,7 +292,12 @@ export default defineComponent({
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'ppm'
+                        text: 'ppm',
+                        font: {
+                            size: 16,
+                            weight: 500
+                        },
+                        padding: { bottom: -5 }
                     },
                     min: 0,
                     max: maxY.value,
@@ -191,136 +332,77 @@ export default defineComponent({
             },
         }));
 
+        const reactiveChartOptions = computed(() => chartOptions);
+
+        const exportData = async function () {
+            const data = chartData.value.datasets[0].data;
+            const labels = chartData.value.labels;
+
+            const dataAsString = labels.map((label, i) => `${label},${data[i]}`).join("\n");
+            const fileContent = `Timestamp,Value\n${dataAsString}`;
+
+            // Pfad zur Datei festlegen (im Cache-Verzeichnis)
+            const filePath = 'exportedData.csv';
+
+            try {
+                // Schreiben der Daten in eine Datei
+                await Filesystem.writeFile({
+                    path: filePath,
+                    data: fileContent,
+                    directory: Directory.Cache, // Android Limitierung, daher Verweisung auf Cache-Verzeichnis
+                    encoding: Encoding.UTF8
+                });
+
+                // Tatsächliche URI der Datei
+                const fileUri = await Filesystem.getUri({
+                    path: filePath,
+                    directory: Directory.Cache
+                });
+
+                // Teilen der Datei
+                await Share.share({
+                    title: 'Exported Data',
+                    text: 'Here is the exported data from AirGuardian',
+                    url: fileUri.uri,
+                    dialogTitle: 'Share CSV data'
+                });
+
+                alert('Daten erfolgreich exportiert!');
+            } catch (e) {
+                console.error("Unable to write file", e);
+            }
+        }
+
 
         return {
             chartData,
-            showModal,
-            closeModals,
+            showInfoModal,
+            showSettingsModal,
             showChart,
+            selectedCO2,
+            averageValue,
+            chartTitle,
+            closeModals,
             datacollection: chartData,
-            chartOptions
+            chartOptions,
+            initializeChartData,
+            exportData,
+            shareOutline,
+            isActive,
+            isLoading,
+            isError,
+            reactiveChartOptions
         };
     }
 })
 </script>
 
-<style>
-/* CSS-Code für den Button */
-.chart-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.info-container {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    align-items: center;
-    gap: 10px;
-}
-
-.modal-button {
-    order: 1;
-}
-
-.outer {
-    position: relative;
-    order: 2;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-}
-
-.inner {
-    width: inherit;
-    height: inherit;
-    text-align: center;
-    line-height: 30px;
-}
-
-label {
-    font-size: .8em;
-    text-transform: uppercase;
-    color: grey;
-    transition: all .3s ease-in;
-    opacity: 1;
-    cursor: pointer;
-}
-
-.inner:before,
-.inner:after {
-    position: absolute;
-    content: '';
-    height: 1px;
-    width: inherit;
-    background: #5c5e5d;
-    left: 0;
-    transition: all .3s ease-in;
-}
-
-.inner:before {
-    top: 0;
-    transform: rotate(0);
-
-}
-
-.inner:after {
-    bottom: 0;
-    transform: rotate(0);
-}
-
-.inner.open label {
-    opacity: 1;
-}
-
-.inner.open:before {
-    top: 50%;
-    transform: rotate(45deg);
-}
-
-.inner.open:after {
-    bottom: 50%;
-    transform: rotate(-45deg);
-
-}
-</style>
-
-
 <style scoped>
-/* CSS-Code für das Modal-Fenster */
-.modal {
-    display: block;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
+@import "@/assets/SharedStyles.css";
+
+.chart-inner-container {
     width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgb(0, 0, 0);
-    background-color: rgba(0, 0, 0, 0.4);
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-}
-
-.close-button {
-    color: #aaaaaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: #000;
-    text-decoration: none;
-    cursor: pointer;
+    height: auto;
+    margin: auto;
 }
 </style>

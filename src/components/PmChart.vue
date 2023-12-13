@@ -4,15 +4,13 @@
         <div class="card">
             <div class="chart-controls">
                 <div class="button-container">
-                    <button @click="selectedPM = 'PM10';" v-bind:class="{ active: selectedPM === 'PM10' }">
-                        PM10
-                    </button>
-                    <button @click="selectedPM = 'PM2.5';" v-bind:class="{ active: selectedPM === 'PM2.5' }">
-                        PM2.5
-                    </button>
+                    <button @click="setSelectedPM('PM10')" v-bind:class="{ active: selectedPM === 'PM10' }">PM10</button>
+                    <button @click="setSelectedPM('PM2.5')" v-bind:class="{ active: selectedPM === 'PM2.5' }">PM2.5</button>
                 </div>
             </div>
-            <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
+            <div class="chart-inner-container">
+                <line-chart v-if="showChart" :chart-data="datacollection" :options="chartOptions"></line-chart>
+            </div>
         </div>
         <div class="icon-bar">
             <button class="custom-icon-button" @click="showInfoModal = true">
@@ -112,6 +110,11 @@ export default defineComponent({
             isError: false
         };
     },
+    methods: {
+        setSelectedPM(type: string) {
+            this.selectedPM = type;
+        },
+    },
     // Verwendung des "reactive"-Werkzeug von Vue 3, um reaktive Dateneigenschaft herzustellen
     // Ermöglicht die automatische Aktualisierung des Diagrammes bei Änderungen der Werte
     // eines Objektes, da dieses reaktiv gemacht wurde
@@ -172,19 +175,19 @@ export default defineComponent({
                 }
 
 
-            // Erstellt Labels und Werte aus den Daten
-            const labels = data.map((entry: { timestamp: any; }) => entry.timestamp);
-            const values = data.map((entry: { value: any; }) => entry.value);
+                // Erstellt Labels und Werte aus den Daten
+                const labels = data.map((entry: { timestamp: any; }) => entry.timestamp);
+                const values = data.map((entry: { value: any; }) => entry.value);
 
                 // Füge die Labels und Werte zum chartData hinzu
                 chartData.value.labels = labels;
-                chartData.value.datasets.push({
+                chartData.value.datasets = [{
                     label: selectedPM.value,
                     data: values,
                     borderColor: selectedPM.value === 'PM10' ? 'rgba(80,80,80,0.5)' : 'rgba(120,120,120,0.5)',
                     backgroundColor: 'rgba(75,75,75,0.1)',
                     fill: true,
-                });
+                }];
 
                 // Die Logik zur Bestimmung des maxY-Wertes muss entsprechend angepasst werden, um das Maximum sowohl aus PM10- als auch PM2.5-Werten zu bestimmen.
                 const allValues = chartData.value.datasets.reduce((acc, dataset) => acc.concat(dataset.data), [] as number[]);
@@ -201,10 +204,6 @@ export default defineComponent({
                 } else if (maxValue > 350) {
                     maxY.value = maxValue;  // Wenn der Wert 350 übersteigt, passt sich das Diagramm entsprechend an.
                 }
-            } else {
-                // Keine Daten gefunden
-                isLoading.value = false;  // Beende den Ladezustand
-                isError.value = true;  // Setze Fehlerzustand
             }
         };
 
@@ -219,7 +218,7 @@ export default defineComponent({
         onMounted(() => {
             // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
             noDataTimeout.value = window.setTimeout(() => {
-                if (isLoading.value) {
+                if (!store.state.isDataEverLoaded && isLoading.value) {
                     isLoading.value = false;
                     isError.value = true;
                 }
@@ -234,12 +233,21 @@ export default defineComponent({
         });
 
 
-        watch(selectedPM, () => {
-            initializeChartData();
-        });
+        watch(selectedPM, (newVal, oldVal) => {
+            if (newVal !== oldVal) {
+                initializeChartData();
+            }
+        }, { immediate: true });
+
 
         const chartOptions = computed(() => ({
             responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    right: 50,
+                }
+            },
             plugins: {
                 datalabels: {
                     color: '#000000',
@@ -409,314 +417,11 @@ export default defineComponent({
 </script>
 
 <style>
-.chart-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    height: calc(100vh - 60px);
-    overflow-y: auto;
-}
+@import "@/assets/SharedStyles.css";
 
-.chart-controls button {
-    background-color: #f5f5f5;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 10px;
-    margin: 0 5px;
-    flex-direction: column;
-    cursor: pointer;
-    outline: none;
-}
-
-.chart-controls button:hover {
-    background-color: #e9e9e9;
-}
-
-.buttons-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-
-.info-container {
-    display: flex;
-    justify-content: space-between;
+.chart-inner-container {
     width: 100%;
-    align-items: center;
-    gap: 10px;
-    padding: 1rem;
-}
-
-.modal-button {
-    order: 1;
-}
-
-.outer {
-    position: relative;
-    order: 2;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-    overflow: hidden;
-}
-
-.inner {
-    width: inherit;
-    height: inherit;
-    text-align: center;
-    line-height: 30px;
-}
-
-.inner:before,
-.inner:after {
-    position: absolute;
-    content: '';
-    height: 1px;
-    width: inherit;
-    left: 0;
-    transition: all .3s ease-in;
-}
-
-.inner:before {
-    top: 0;
-    transform: rotate(0);
-}
-
-.inner:after {
-    bottom: 0;
-    transform: rotate(0);
-}
-
-.inner.open:before {
-    top: 50%;
-    left: 49%;
-    background: rgba(58, 209, 141, 0.9);
-    transform: rotate(90deg);
-}
-
-.inner.open:after {
-    bottom: 50%;
-    left: -49%;
-    background: rgba(58, 209, 141, 0.9);
-    transform: rotate(-90deg);
-}
-
-.outer:has(.inner.open) {
-    background-color: #fefefe;
-    scale: 1.5;
-    opacity: 100%;
-    box-shadow: 0px 1px 2px #a2a2a2;
-}
-
-.inner.open .label {
-    color: rgb(83, 140, 204);
+    height: auto;
+    margin: auto;
 }
 </style>
-<style scoped> @keyframes rotate {
-     100% {
-         transform: rotate(360deg);
-     }
- }
-
- /* Responsives Design */
- @media (max-width: 768px) {
-     .card {
-         padding: 0.5rem;
-     }
-
-     .info-container {
-         flex-direction: column;
-     }
- }
-
- .average-value {
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     width: 100%;
-     height: 8%;
-     background-color: #fefefe;
-     border: 1px solid rgba(58, 209, 141, 0.9);
-     border-radius: 5px;
-     color: rgb(83, 140, 204);
-     bottom: -2%;
-     padding: 10px;
-     position: absolute;
-     margin-top: 20px;
-     font-size: 24px;
-     font-weight: bold;
-     box-shadow: 0px 0px 8px #a2a2a2;
-     z-index: 100;
- }
-
- .loader {
-     border: 8px solid #f3f3f3;
-     border-top: 8px solid rgb(83, 140, 204);
-     border-radius: 50%;
-     width: 50px;
-     height: 50px;
-     scale: 0.7;
-     animation: rotate 2s linear infinite;
- }
-
- .average-value span {
-     display: inline-block;
- }
-
- .average-value span:after {
-     content: '\2022';
-     display: inline-block;
-     margin-left: 10px;
-     animation: spin 1s linear infinite;
- }
-
- .average-value:not(.isLoading) span:after {
-     display: none;
- }
-
- .info-modal {
-     background-color: rgba(0, 0, 0, 0.4);
- }
-
- .info-modal-content {
-     background-color: #fefefe;
-     margin: 15% auto;
-     padding: 20px;
-     border: 1px solid #888;
-     width: 90%;
- }
-
- .pm-button:hover {
-     background-color: #555555;
-     color: white;
- }
-
- .modal {
-     display: block;
-     position: fixed;
-     z-index: 1;
-     left: 0;
-     top: 0;
-     width: 100%;
-     height: 100%;
-     overflow: auto;
-     background-color: rgba(0, 0, 0, 0.654);
-     justify-content: center;
-     align-items: center;
- }
-
- .close-button {
-     color: #aaaaaa;
-     float: right;
-     font-size: 28px;
-     font-weight: bold;
- }
-
- .close-button:hover,
- .close-button:focus {
-     color: #000;
-     text-decoration: none;
-     cursor: pointer;
- }
-
- .card {
-     background: #ffffff;
-     box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
-     border-radius: 8px;
-     padding: 1rem;
- }
-
- .button-container {
-     display: flex;
-     justify-content: center;
-     margin-bottom: 10px;
- }
-
- .button-container button {
-     background-color: #fefefe;
-     border: 1px solid rgb(218, 216, 216);
-     border-radius: 5px;
-     padding: 10px;
-     margin: 0 5px;
-     color: #7a7a7a;
-     transition: all 0.3s ease-in-out;
-     cursor: pointer;
-     outline: none;
- }
-
- .button-container button.active:before,
- .button-container button.active:after {
-     content: '';
-     position: absolute;
-     left: 0;
-     height: 2px;
-     width: 100%;
-     background-color: rgba(58, 209, 141, 0.9);
- }
-
- .button-container button.active:before {
-     top: 0;
- }
-
- .button-container button.active:after {
-     bottom: 0;
- }
-
- .button-container button {
-     position: relative;
-     overflow: hidden;
- }
-
- .button-container button:not(.active) {
-     opacity: 50%;
- }
-
-  .icon-bar {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: 50px;
-}
-
- .custom-icon {
-  margin: 0 20px; /* Setzt einen gleichmäßigen Abstand zwischen den Icons */
-  font-size: 30px; /* Größe der Icons */
-  color: #7a7a7a;
-  border: 2px solid rgb(83, 140, 204);
-  border-radius: 50%;
-  padding: 15px;
-  background-color: transparent;
-  box-shadow: 0px 0px 4px #a2a2a2;
-  opacity: 80%;  
-}
-
- .custom-icon-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
- .custom-icon:hover {
-     color: #333;
-     border-color: #333;
- }
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.settings-modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 5px;
-}
-</style>
-

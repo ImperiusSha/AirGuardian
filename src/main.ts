@@ -7,6 +7,8 @@ import 'chartjs-adapter-date-fns';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'leaflet/dist/leaflet.css';
+import Shepherd from 'shepherd.js';
+import 'shepherd.js/dist/css/shepherd.css';
 
 
 Chart.register(ChartDataLabels, LineController, CategoryScale, LinearScale, PointElement, LineElement, TimeScale);
@@ -32,10 +34,12 @@ import '@ionic/vue/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
+
 const app = createApp(App);
 app.use(IonicVue);
 app.use(router);
 app.use(store);
+app.config.globalProperties.$shepherd = Shepherd;
   
 router.isReady().then(() => {
   app.mount('#app');
