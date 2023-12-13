@@ -5,7 +5,7 @@
       <!-- <div class="cloud"></div> -->
       <div class="navbar-content">
         <input type="checkbox" id="checkbox2" class="checkbox2 visuallyHidden" v-model="menuOpen">
-        <h1 class="navbar-title">Air Guardian</h1>
+        <h1 class="navbar-title" @click="restartTutorial">Air Guardian</h1>
         <ion-button fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
           @click="showModal = true"></ion-button>
       </div>
@@ -33,12 +33,13 @@
 
 
 <script lang="ts">
-import { computed, defineComponent, ref, watch } from 'vue';
+import { Ref, computed, defineComponent, onMounted, ref, watch } from 'vue';
 import { IonButton, IonCheckbox } from '@ionic/vue';
 import { useRouter } from 'vue-router';
 import { useBluetooth } from './composables/useBluetooth';
 import useStatusIndicator from './composables/useStatusIndicator';
 import { useStore } from 'vuex';
+import Shepherd from 'shepherd.js';
 
 export default defineComponent({
   name: 'App',
@@ -54,20 +55,97 @@ export default defineComponent({
     const menuOpen = ref(false);
     const store = useStore();
     const clouds = computed(() => store.getters.clouds);
+    const tour = ref<Shepherd.Tour | null>(null);
 
-        // Beispiel für eine Funktion, um die Position der Wolke zu berechnen
-        function cloudPosition(id: number) {
-      // Hier würde Ihre Logik stehen, um die Position der Wolke basierend auf der ID oder Zeit zu berechnen
-      return (id % 100) * 10; // Beispiel: Position basierend auf der ID
+    //Funktion, um die Position der Wolke zu berechnen
+    function cloudPosition(id: number) {
+      return (id % 100) * 10;
     }
 
-    // Beobachten Sie die Werte und erstellen Sie Wolken, wenn neue Werte hinzugefügt werden
+    // Beobachtet die Werte und erstellt CO2 Wolken, wenn neue Werte hinzugefügt werden
     watch(() => store.state.co2Values, (newValues) => {
       if (newValues.length > 0) {
         const latestValue = newValues[newValues.length - 1];
         store.dispatch('createCloudWithValue', { type: 'co2', value: latestValue.value });
       }
     }, { deep: true });
+
+    // Methode zum Initialisieren des Tutorials
+    const initializeTutorial = () => {
+      tour.value = new Shepherd.Tour({
+        useModalOverlay: true,
+        defaultStepOptions: {
+          classes: 'shadow-md bg-purple-dark',
+          scrollTo: true
+        }
+      });
+
+      // Schritt 1: Statusindikator
+      tour.value.addStep({
+        id: 'status-indicator',
+        classes: 'custom-shepherd-step',
+        text: `
+    <div class="tutorial-status-indicator">
+      Das ist der Statusindikator. Er zeigt dir an, ob eine Verbindung zur Sensorbox besteht.
+      <br>
+      <img class="status-indicator-img" src="images/statusIndicatorAn.png" alt="Verbindung hergestellt">Verbindung hergestellt</img>
+      <br>
+      <img class="status-indicator-img" src="images/statusIndicatorAus.png" alt="Verbindung verloren">Verbindung verloren</img>
+    </div>
+    `,
+        attachTo: { element: '#statusIndicator', on: 'bottom' },
+        buttons: [
+          {
+            text: 'Weiter 1/5',
+            action: tour.value.next
+          }
+        ],
+      });
+
+      // Schritt 2: Gesamte Navbar
+      tour.value.addStep({
+        id: 'navbar',
+        classes: 'custom-shepherd-step',
+        text: `
+    <div class="tutorial-cloud">
+      In der Navigationsleiste erscheinen zwischendurch kleine Wölkchen, die neue CO2-Werte anzeigen.
+      <br>
+      <img class="status-indicator-img" src="images/clouds.png" alt="Tutorial Cloud"></img>
+    </div>
+    `,
+        attachTo: { element: '.navbar', on: 'bottom' },
+        buttons: [
+          {
+            text: 'Weiter 2/5',
+            action: () => {
+              if (tour.value) {
+                tour.value.next();
+                store.commit('SET_CURRENT_TUTORIAL_STEP', 'homepage');
+              }
+            }
+          }
+        ],
+      });
+    };
+
+    // Methode, um das Tutorial neu zu starten
+    const restartTutorial = () => {
+      store.commit('SET_TUTORIAL_COMPLETED', false);
+      store.commit('SET_CURRENT_TUTORIAL_STEP', 'app');
+      initializeTutorial();
+      if (tour.value) {
+        tour.value.start();
+      }
+    };
+
+    onMounted(() => {
+      if (!store.state.tutorialCompleted && store.state.currentTutorialStep === 'app') {
+        initializeTutorial();
+        if (tour.value) {
+          tour.value.start();
+        }
+      }
+    });
 
     const toggleMenu = () => {
       if (isConnected.value) {
@@ -122,7 +200,8 @@ export default defineComponent({
       toggleMenu,
       menuOpen,
       clouds,
-      cloudPosition
+      cloudPosition,
+      restartTutorial
     };
   },
 });
@@ -273,6 +352,7 @@ h2 {
   0% {
     left: -80%;
   }
+
   100% {
     left: 100%;
   }
@@ -333,8 +413,6 @@ h2 {
 h1 {
   text-align: center;
 }
-
-
 
 /* Status indicator positioning */
 #statusIndicator {

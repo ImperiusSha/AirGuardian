@@ -44,6 +44,8 @@ export default createStore({
         sensorData: [] as SensorDataPoint[],
         isDataEverLoaded: false,
         clouds: [] as Cloud[],
+        tutorialCompleted: false,
+        currentTutorialStep: 'app',
     },
     mutations: {
         addCo2Value(state, value: number) {
@@ -104,6 +106,12 @@ export default createStore({
                 state.clouds.push(payload);
             }
         },
+        SET_TUTORIAL_COMPLETED(state, completed) {
+            state.tutorialCompleted = completed;
+        },
+        SET_CURRENT_TUTORIAL_STEP(state, step) {
+            state.currentTutorialStep = step;
+        },
     },
     actions: {
         addLocationAndData({ commit }, payload) {
@@ -111,6 +119,10 @@ export default createStore({
         },
         createCloudWithValue({ commit }, payload) {
             commit('CREATE_CLOUD_WITH_VALUE', payload);
+        },
+        startTutorial({ commit }) {
+            commit('SET_TUTORIAL_COMPLETED', false);
+            commit('SET_CURRENT_TUTORIAL_STEP', 'app');
         },
     },
     getters: {
