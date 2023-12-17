@@ -1,49 +1,44 @@
+# **AirGuardian (SensIT)**
 
-```
-AirGuardian
-├─ capacitor.config.ts
-├─ cypress.config.ts
-├─ index.html
-├─ ionic.config.json
-├─ package-lock.json
-├─ package.json
-├─ public
-│  └─ favicon.png
-├─ README.md
-├─ src
-│  ├─ App.vue
-│  ├─ components
-│  │  ├─ Co2Chart.vue
-│  │  ├─ LineChart.vue
-│  │  └─ Pm10Chart.vue
-│  ├─ composables
-│  │  ├─ useBluetooth.ts
-│  │  ├─ useGPS.ts
-│  │  └─ values.ts
-│  ├─ main.ts
-│  ├─ router
-│  │  └─ index.ts
-│  ├─ router.ts
-│  ├─ theme
-│  │  └─ variables.css
-│  ├─ views
-│  │  ├─ Dashboard.vue
-│  │  └─ HomePage.vue
-│  └─ vite-env.d.ts
-├─ tests
-│  ├─ e2e
-│  │  ├─ fixtures
-│  │  │  └─ example.json
-│  │  ├─ specs
-│  │  │  └─ test.cy.ts
-│  │  └─ support
-│  │     ├─ commands.ts
-│  │     └─ e2e.ts
-│  └─ unit
-│     └─ example.spec.ts
-├─ tsconfig.json
-├─ tsconfig.node.json
-├─ vite.config.ts
-└─ vue-shim.d.ts
+## **Project Overview**
 
-```
+AirGuardian (SensIT) is an innovative application for monitoring air quality. It provides real-time information on CO2 levels, PM10/PM2.5 values, and other key air quality indicators. With a reactive homepage animation and the ability to export data, AirGuardian is an indispensable tool for those who are environmentally conscious.
+
+## **Screenshots**
+
+(Platzhalter)
+
+## **Technologies**
+
+- **Frontend**: Vue.js
+- **Mobile** **Framework**: Ionic Framework with Capacitor
+- **State Management**: Vuex
+- **Data Visualization**: vue-chart-3
+- **Animations**: GSAP/Lottie (WIP)
+- **Tutorial**: Shepherd Plugin
+
+
+## **Installation**
+**Prerequisites**
+
+Install Node.js, Ionic, and Vue.js on your system.
+
+**Installation Steps**
+
+- Clone the repository: git clone [Repository URL]
+- Navigate to the project directory: `cd AirGuardian`
+- Install dependencies: `npm install`
+- Start the app: ```ionic serve```
+
+
+## **Mobile Installation and Testing**
+**Prerequisites for Mobile**
+
+Install the Ionic CLI and Cordova globally: `npm install -g ionic capacitor`.
+Set up a development environment for Android/iOS.
+
+**Installation and Testing on Mobile Devices**
+
+- Add the platform (iOS/Android): `ionic capacitor add ios` or `ionic capacitor add android`
+- Build the app for the specific platform: `ionic capacitor build ios` or `ionic capacitor build android`
+- Open the platform-specific project in Xcode (for iOS) or Android Studio (for Android) and run on a device or emulator.
