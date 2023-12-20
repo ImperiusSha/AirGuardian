@@ -7,23 +7,40 @@
         <input type="checkbox" id="checkbox2" class="checkbox2 visuallyHidden" v-model="menuOpen">
         <h1 class="navbar-title" @click="restartTutorial">Air Guardian</h1>
         <ion-button fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
-          @click="showModal = true"></ion-button>
+          @click="scanDevices"></ion-button>
       </div>
       <div v-for="cloud in clouds" :key="cloud.id" class="cloud" :style="{ 'left': cloudPosition(cloud.id) + '%' }">
         <span class="cloud-value">{{ cloud.value }}</span>
       </div>
     </div>
     <!-- Ende der NavBar -->
-    <div v-if="showModal" class="modal">
+    <div v-if="showDeviceModal" class="modal">
+      <!-- Warnmeldung für Firefox-Benutzer -->
+      <div v-if="isFirefox" class="firefox-warning">
+        Der Firefox-Browser wird nicht unterstützt.
+      </div>
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Verbindung zur Sensorbox</h2>
-          <span class="close-button" @click="showModal = false">&times;</span>
+          <h2>Wähle ein Gerät</h2>
+          <span class="close-button" @click="showDeviceModal = false">&times;</span>
         </div>
-        <ion-checkbox v-model="autoConnect" @ionChange="toggleAutoConnect">Automatisch</ion-checkbox>
+        <div class="modal-body">
+          <div class="button-container-selection">
+            <div v-for="device in availableDevices" :key="device.deviceId" class="device-entry">
+              <span :class="{ 'connected-device-name': connectedDeviceId === device.deviceId }">
+                {{ device.name }}
+              </span>
+              <button @click="toggleDeviceConnection(device)"
+                :class="{ 'button-connected': connectedDeviceId === device.deviceId, 'button-disconnected': connectedDeviceId !== device.deviceId }"
+                :disabled="isConnected && connectedDeviceId !== device.deviceId">
+                {{ connectedDeviceId === device.deviceId ? 'Trennen' : 'Verbinden' }}
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="modal-footer">
-          <ion-button @click="showModal = false">Abbrechen</ion-button>
-          <ion-button @click="connectToSensorBox">Verbinden</ion-button>
+          <!-- <button @click="disconnectFromSensor">Verbindung trennen</button>
+          <button @click="showDeviceModal = false">Schließen</button> -->
         </div>
       </div>
     </div>
@@ -33,7 +50,7 @@
 
 
 <script lang="ts">
-import { Ref, computed, defineComponent, onMounted, ref, watch } from 'vue';
+import { computed, defineComponent, onMounted, ref, watch } from 'vue';
 import { IonButton, IonCheckbox } from '@ionic/vue';
 import { useRouter } from 'vue-router';
 import { useBluetooth } from './composables/useBluetooth';
@@ -49,13 +66,22 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter();
-    const { isConnected, connectToSensor, disconnectFromSensor, autoConnect, toggleAutoConnect } = useBluetooth();
+    const { isConnected, connectToSensor, disconnectFromSensor, availableDevices, scanForDevices, connectedDeviceId } = useBluetooth();
     const { isConnectedIndicator } = useStatusIndicator();
     const showModal = ref(false);
     const menuOpen = ref(false);
     const store = useStore();
     const clouds = computed(() => store.getters.clouds);
     const tour = ref<Shepherd.Tour | null>(null);
+    const showDeviceModal = ref(false);
+    const isFirefox = ref(false);
+
+    // Überprüft, ob es sich um Firefox handelt
+    const checkBrowser = () => {
+      const firefoxRegex = /firefox|fxios/i;
+      isFirefox.value = firefoxRegex.test(navigator.userAgent);
+      isFirefox.value = !('bluetooth' in navigator);
+    };
 
     //Funktion, um die Position der Wolke zu berechnen
     function cloudPosition(id: number) {
@@ -139,6 +165,7 @@ export default defineComponent({
     };
 
     onMounted(() => {
+      checkBrowser();
       if (!store.state.tutorialCompleted && store.state.currentTutorialStep === 'app') {
         initializeTutorial();
         if (tour.value) {
@@ -172,14 +199,41 @@ export default defineComponent({
     };
 
 
+    const selectDevice = (device: { deviceId: string; }) => {
+      if (device.deviceId !== connectedDeviceId.value) {
+        connectToSensor(device);
+        showDeviceModal.value = false;
+      }
+    };
+
     const connectToSensorBox = () => {
       showModal.value = false;
       if (!isConnected.value) {
-        connectToSensor();
+        showDeviceModal.value = true;
       } else {
         disconnectFromSensor();
       }
     };
+
+    const scanDevices = () => {
+      checkBrowser();
+      // Zeigt eine Warnung an, wenn Firefox verwendet wird
+      if (isFirefox.value) {
+        alert("Bitte beachten Sie, dass der Firefox-Browser nicht unterstützt wird.");
+      } else {
+        showDeviceModal.value = true;
+        scanForDevices();
+      }
+    };
+
+    const toggleDeviceConnection = (device: { deviceId: any; }) => {
+      if (connectedDeviceId.value === device.deviceId) {
+        disconnectFromSensor();
+      } else if (!isConnected.value) {
+        connectToSensor(device);
+      }
+    };
+
 
     watch(isConnected, (newVal) => {
       if (!newVal) {
@@ -191,8 +245,6 @@ export default defineComponent({
       isConnected,
       showModal,
       connectToSensorBox,
-      autoConnect,
-      toggleAutoConnect,
       isConnectedIndicator,
       goToDashboard,
       goToHomePage,
@@ -201,7 +253,16 @@ export default defineComponent({
       menuOpen,
       clouds,
       cloudPosition,
-      restartTutorial
+      restartTutorial,
+      availableDevices,
+      showDeviceModal,
+      selectDevice,
+      scanForDevices,
+      scanDevices,
+      connectedDeviceId,
+      disconnectFromSensor,
+      toggleDeviceConnection,
+      isFirefox
     };
   },
 });
@@ -236,8 +297,10 @@ export default defineComponent({
   }
 
   .modal-header {
-    flex-direction: column;
-    align-items: flex-start;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .modal-footer {
