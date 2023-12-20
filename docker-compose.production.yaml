@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+
+  # AirGuardian APP
+  app:
+    build: .
+    ports:
+      - 8060:8060
+    command: ["ionic", "serve", "--host=0.0.0.0", "--port=8060"]
+
+  # HTTPD Proxy Forward
+  web:
+    image: httpd
+    ports:
+      - 8100:8100
+    volumes:
+      - $PWD/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+      #TODO: Insert SSL Keys
+
