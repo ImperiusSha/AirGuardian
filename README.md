@@ -6,7 +6,8 @@ AirGuardian (SensIT) is an innovative application for monitoring air quality. It
 
 ## **Screenshots**
 
-(Platzhalter)
+![Startseite](resources/homepage.png)
+![Homepage](resources/diagram.png)
 
 ## **Technologies**
 
