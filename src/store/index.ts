@@ -76,6 +76,16 @@ export default createStore({
             addToValues(state, 'humidValues', value);
             state.isDataEverLoaded = true;
         },
+        // Loeschen vorhandener Werte bei Verbindungstrennung
+        resetSensorValues(state) {
+            state.co2Values = [];
+            state.temp_co2Values = [];
+            state.pm10Values = [];
+            state.pm25Values = [];
+            state.tempValues = [];
+            state.pressValues = [];
+            state.humidValues = [];
+        },
         // Entfernt doppelt Einträge durch die Verwendung von new Set()
         // Filtert leere Werte durch die Verwendung von filter()
         removeEmptyAndDuplicate(state) {

@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+
+  # AirGuardian APP
+  app:
+    build: .
+    # Mount workdir to cache node modules 
+    volumes:
+      - $PWD:/work
+    ports:
+      - 8100:8100
