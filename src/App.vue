@@ -80,7 +80,6 @@ export default defineComponent({
     const checkBrowser = () => {
       const firefoxRegex = /firefox|fxios/i;
       isFirefox.value = firefoxRegex.test(navigator.userAgent);
-      isFirefox.value = !('bluetooth' in navigator);
     };
 
     //Funktion, um die Position der Wolke zu berechnen
