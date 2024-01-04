@@ -32,15 +32,24 @@
                     </div>
                 </div>
             </div>
-            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
             <button class="custom-icon-button" @click="showSettingsModal = true">
-                <i class="fas fa-cog custom-icon"></i>
+                <i class="fas fa-chart-line custom-icon"></i>
             </button>
-            <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeModals">
-                <div class="modal-content settings-modal-content" @click.stop>
+            <div v-if="showSettingsModal" class="modal info-modal" @click.self="closeModals">
+                <div class="info-modal-content" @click.stop>
                     <span class="close-button" @click="showSettingsModal = false">&times;</span>
+                    <h2>{{ getAtmoImprovements(selectedAtmo).title }}</h2>
+                    <div v-for="(section, sectionIndex) in getAtmoImprovements(selectedAtmo).sections"
+                        :key="`section-${sectionIndex}`">
+                        <h3>{{ section.heading }}</h3>
+                        <div v-for="(item, itemIndex) in section.items" :key="`item-${itemIndex}`">
+                            <p><b>{{ item.title }}:</b> {{ item.description }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
         </div>
         <p class="average-value">
             <span v-if="isLoading">
@@ -280,6 +289,69 @@ export default defineComponent({
             }
         }
 
+        const getAtmoImprovements = (atmoType: 'TEMP' | 'HUMID' | 'PRESS') => {
+            const descriptions: {
+                [key: string]: {
+                    [x: string]: any; title: string; content: string[]
+                }
+            } = {
+                TEMP: {
+                    title: 'Möglichkeiten zur Verbesserung der Temperatur',
+                    sections: [
+                        {
+                            heading: 'Drinnen',
+                            items: [
+                                { title: 'Thermostatsteuerung', description: 'Verwenden Sie programmierbare Thermostate, um die Temperatur in Ihrem Zuhause zu steuern und sie nachts oder während Ihrer Abwesenheit zu senken.' },
+                                { title: 'Energieeffizienz', description: 'Verbessern Sie die Energieeffizienz Ihres Hauses durch gute Isolierung, Dichtungen an Fenstern und Türen sowie die Verwendung von energieeffizienten Heiz- und Kühlsystemen.' },
+                                { title: 'Schattenspender', description: 'Verwenden Sie Vorhänge oder Jalousien, um direkte Sonneneinstrahlung während heißer Tage zu blockieren und so die Raumtemperatur zu senken.' },
+                            ],
+                        },
+                        {
+                            heading: 'Draußen',
+                            items: [
+                                { title: 'Stadtplanung', description: 'Unterstützen Sie städtebauliche Planungen, die auf eine Reduzierung von Hitzeinseln in urbanen Gebieten abzielen, wie Grünanlagen und Straßenbäume.' },
+                            ],
+                        },
+                    ],
+                    content: []
+                },
+                PRESS: {
+                    title: 'Möglichkeiten zur Verbesserung des Drucks',
+                    sections: [
+                        {
+                            heading: 'Drinnen',
+                            items: [
+                                { title: 'Fensterabdichtung', description: 'Stellen Sie sicher, dass Fenster und Türen gut abgedichtet sind, um einen konstanten Luftdruck im Inneren zu gewährleisten und Energieverluste zu minimieren' },
+                            ],
+                        },
+                    ],
+                    content: []
+                },
+                HUMID: {
+                    title: 'Möglichkeiten zur Verbesserung der Luftfeuchtigkeit',
+                    sections: [
+                        {
+                            heading: 'Drinnen',
+                            items: [
+                                { title: 'Luftbefeuchter', description: 'Verwenden Sie Luftbefeuchter, um die Luftfeuchtigkeit in Innenräumen zu erhöhen, besonders während der trockenen Wintermonate.' },
+                                { title: 'Pflanzenpflege', description: 'Das regelmäßige Besprühen von Zimmerpflanzen oder das Platzieren von Wasserbehältern in der Nähe von Heizkörpern kann die Luftfeuchtigkeit erhöhen.' },
+                                { title: 'Lüften', description: 'Lüften Sie regelmäßig, um frische Luft hereinzulassen und überschüssige Feuchtigkeit abzuführen.' },
+                                { title: 'Vermeiden Sie Überhitzung', description: 'Reduzieren Sie die Raumtemperatur, da kühle Luft tendenziell mehr Feuchtigkeit aufnehmen kann.'},
+                            ],
+                        },
+                        {
+                            heading: 'Draußen',
+                            items: [
+                                { title: 'Wässern', description: 'Bewässern Sie Pflanzen und Bäume in Ihrer Umgebung regelmäßig, um die Luftfeuchtigkeit in der Nähe zu erhöhen.' },
+                            ],
+                        },
+                    ],
+                    content: []
+                },
+            };
+            return descriptions[atmoType];
+        };
+
         const getAtmoDescription = (atmoType: 'TEMP' | 'HUMID' | 'PRESS') => {
             const descriptions: { [key: string]: { title: string; content: string[] } } = {
                 TEMP: {
@@ -315,7 +387,6 @@ export default defineComponent({
             };
             return descriptions[atmoType];
         };
-
 
         const chartOptions = computed(() => {
             const yAxisSettings = getYAxisSettings(selectedAtmo.value);
@@ -549,7 +620,8 @@ export default defineComponent({
             isLoading,
             isError,
             reactiveChartOptions,
-            getAtmoDescription
+            getAtmoDescription,
+            getAtmoImprovements
         };
     }
 })
@@ -557,9 +629,9 @@ export default defineComponent({
 <style scoped>
 @import "@/assets/SharedStyles.css";
 
- .chart-inner-container {
-     width: 100%;
-     height: auto;
-     margin: auto;
- }
+.chart-inner-container {
+    width: 100%;
+    height: auto;
+    margin: auto;
+}
 </style>
