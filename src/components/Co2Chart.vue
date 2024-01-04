@@ -37,15 +37,39 @@
                         Kopfschmerzen, Schläfrigkeit und mangelnde Konzentration können auftreten.</p>
                 </div>
             </div>
-            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
             <button class="custom-icon-button" @click="showSettingsModal = true">
-                <i class="fas fa-cog custom-icon"></i>
+                <i class="fas fa-chart-line custom-icon"></i>
             </button>
-            <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeModals">
-                <div class="modal-content settings-modal-content" @click.stop>
+            <div v-if="showSettingsModal" class="modal info-modal" @click.self="closeModals">
+                <div class="info-modal-content" @click.stop>
                     <span class="close-button" @click="showSettingsModal = false">&times;</span>
+                    <h2>Möglichkeit zur Verbesserung von CO2-Werten</h2>
+                    <p>Die Reduzierung der CO2-Werte erfordert umweltfreundliche Lebensstilentscheidungen, Energieeffizien,
+                        erneuerbare Energien und nachhaltige Verkehrsoptionen, um den Ausstoß von Treibhausgasen zu
+                        verringern.
+                    </p>
+                    <h3>Drinnen</h3>
+                    <p><b>Luftreiniger:</b> Einige Luftreiniger sind mit speziellen CO2-Filtern ausgestattet,
+                        die dazu beitragen können, die CO2-Konzentration in Innenräumen zu senken.</p>
+                    <p><b>Lüften:</b> Öffnen Sie regelmäßig Fenster und Türen, um frische Luft hereinzulassen und CO2
+                        aus dem Raum abzuführen. Dies ist besonders wichtig in schlecht belüfteten Räumen.</p>
+                    <p><b>Energiesparmaßnamen: </b>Durch die Verbesserung der Energieeffizienz in Ihrem Zuhause können Sie
+                        den Bedarf
+                        an Heizung oder Klimatisierung reduzieren, was wiederum den CO2-Ausstoß senken kann.</p>
+                    <p><b>Pflanzen:</b> Zimmerpflanzen können CO2 aufnehmen und Sauerstoff abgeben.
+                        Das Platzieren von Pflanzen in Innenräumen kann zur Verbesserung der Luftqualität beitragen.</p>
+                    <h3>Draußen</h3>
+                    <p><b>Verkehr reduzieren:</b> Nutzen Sie öffentliche Verkehrsmittel, um den Autoverkehr und die damit
+                        verbundenen
+                        Abgasemissionen zu reduzieren.</p>
+                    <p><b>Elektrische Fahrzeuge:</b> Wenn Sie ein Auto benötigen, erwägen Sie den Umstieg auf ein
+                        Elektrofahrzeug
+                        oder ein Hybridfahrzeug, um die CO2-Emissionen zu verringern.</p>
+                    <p><b>Erneuerbare Energien:</b> Unterstützen Sie erneuerbare Energiequellen wie Solarenergie und
+                        Windenergie, um den CO2-Ausstoß im Zusammenhang mit der Stromerzeugung zu minimieren.</p>
                 </div>
             </div>
+            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
         </div>
         <p class="average-value">
             <span v-if="isLoading">
