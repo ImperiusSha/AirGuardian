@@ -267,6 +267,9 @@ export default defineComponent({
 });
 </script>
 
+<style>
+@import "@/assets/SharedStyles.css";
+</style>
 
 <style scoped>
 #diagramButton {
