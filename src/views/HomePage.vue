@@ -1,6 +1,6 @@
 <template>
   <div class="background" :style="{ backgroundImage: `url(${backgroundImage})` }" @touchstart="handleTouchStart"
-    @touchend="handleTouchEnd">
+    @touchend="handleTouchEnd" @mousedown="handleMouseDown" @mouseup="handleMouseUp">
   </div>
 </template>
 
@@ -23,6 +23,9 @@ export default defineComponent({
     const store = useStore();
     const touchStartX = ref(0);
     const touchEndX = ref(0);
+    const isMouseDown = ref(false);
+    const mouseXStart = ref(0);
+    const mouseXEnd = ref(0);
     const backgroundImage = ref(goodAir); // Initialer Wert
     const tour = ref<Shepherd.Tour | null>(null);
 
@@ -44,7 +47,7 @@ export default defineComponent({
       // Schritt 3: Background
       tour.value.addStep({
         id: 'background',
-        text:  `
+        text: `
         <div class="tutorial-background">
           <span>Der Hintergrund passt sich dynamisch an deine Umgebungsverhältnisse an.</span>
           <img class="background-good" src="src/assets/GuteLuft.gif" alt="Gute Luft">
@@ -114,12 +117,26 @@ export default defineComponent({
       handleSwipeGesture();
     };
 
-    const handleSwipeGesture = () => {
+    const handleMouseDown = (e: MouseEvent) => {
+      isMouseDown.value = true;
+      mouseXStart.value = e.clientX;
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (!isMouseDown.value) return;
+      isMouseDown.value = false;
+      mouseXEnd.value = e.clientX;
+      handleSwipeGesture(true); // true für Maus-Event
+    };
+
+    const handleSwipeGesture = (isMouseEvent = false) => {
       const minSwipeDistance = 30; // Minimale Distanz für einen Swipe
-      if (touchEndX.value - touchStartX.value > minSwipeDistance) {
+      const start = isMouseEvent ? mouseXStart.value : touchStartX.value;
+      const end = isMouseEvent ? mouseXEnd.value : touchEndX.value;
+      if (end - start > minSwipeDistance) {
         // Swipe nach rechts
         router.push({ name: 'Dashboard' });
-      } else if (touchStartX.value - touchEndX.value > minSwipeDistance) {
+      } else if (start - end > minSwipeDistance) {
         // Swipe nach links
         router.push({ name: 'MapView' });
       }
@@ -157,6 +174,8 @@ export default defineComponent({
       backgroundImage,
       handleTouchStart,
       handleTouchEnd,
+      handleMouseDown,
+      handleMouseUp
     };
   },
 })

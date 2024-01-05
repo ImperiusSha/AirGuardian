@@ -1,5 +1,6 @@
 <template>
-    <div class="swipe-area" @touchstart="handleTouchStart" @touchend="handleTouchEnd" @click="handleClick">
+    <div class="swipe-area" @touchstart="handleTouchStart" @touchend="handleTouchEnd" @click="handleClick"
+        @mousedown="handleMouseDown" @mouseup="handleMouseUp">
         <div class="line top-line"></div>
         <div class="line bottom-line"></div>
     </div>
@@ -7,9 +8,6 @@
         <LeafletMap />
     </div>
 </template>
-
-
-
 
 <script lang="ts">
 import LeafletMap from '@/components/LeafletMap.vue';
@@ -21,6 +19,9 @@ export default {
         const router = useRouter();
         const touchStartX = ref(0);
         const touchEndX = ref(0);
+        const isMouseDown = ref(false);
+        const mouseXStart = ref(0);
+        const mouseXEnd = ref(0);
 
         const handleTouchStart = (e: TouchEvent) => {
             touchStartX.value = e.touches[0].clientX;
@@ -31,9 +32,23 @@ export default {
             handleSwipeGesture();
         };
 
-        const handleSwipeGesture = () => {
+        const handleMouseDown = (e: MouseEvent) => {
+            isMouseDown.value = true;
+            mouseXStart.value = e.clientX;
+        };
+
+        const handleMouseUp = (e: MouseEvent) => {
+            if (!isMouseDown.value) return;
+            isMouseDown.value = false;
+            mouseXEnd.value = e.clientX;
+            handleSwipeGesture(true); // true für Maus-Event
+        };
+
+        const handleSwipeGesture = (isMouseEvent = false) => {
             const minSwipeDistance = 30;
-            if (touchEndX.value - touchStartX.value > minSwipeDistance) {
+            const start = isMouseEvent ? mouseXStart.value : touchStartX.value;
+            const end = isMouseEvent ? mouseXEnd.value : touchEndX.value;
+            if (end - start > minSwipeDistance) {
                 // Swipe nach rechts
                 router.push({ name: 'Homepage' });
             }
@@ -47,7 +62,9 @@ export default {
         return {
             handleTouchStart,
             handleTouchEnd,
-            handleClick
+            handleClick,
+            handleMouseDown,
+            handleMouseUp
         }
     },
     components: {
@@ -62,7 +79,7 @@ export default {
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
+    width: 40px;
     height: 10%;
     background: rgba(0, 0, 0, 0.1);
     z-index: 1000;
@@ -70,7 +87,7 @@ export default {
 
 .line {
     position: absolute;
-    width: 20px;
+    width: 40px;
     height: 1px;
     background-color: rgba(255, 255, 255, 0.7);
 }
@@ -78,7 +95,7 @@ export default {
 .top-line {
     top: 0;
     left: 0;
-    transform: rotate(-65deg);
+    transform: rotate(-45deg);
     transform-origin: top right;
     scale: 2.3;
 }
@@ -86,7 +103,7 @@ export default {
 .bottom-line {
     bottom: 0;
     left: 0;
-    transform: rotate(65deg);
+    transform: rotate(45deg);
     transform-origin: bottom right;
     scale: 2.3;
 }

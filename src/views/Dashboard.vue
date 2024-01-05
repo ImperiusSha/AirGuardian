@@ -1,28 +1,31 @@
 <template>
-    <div class="dashboard" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
-        <div class="buttons">
-            <div class="outer" @click="showChart('co2')">
-                <div class="inner" v-bind:class="{ open: currentChart === 'co2' }">
-                    <label class="label">CO2</label>
+    <div class="page-container">
+        <div class="dashboard" @touchstart="handleTouchStart" @touchend="handleTouchEnd" @mousedown="handleMouseDown"
+            @mouseup="handleMouseUp">
+            <div class="buttons">
+                <div class="outer" @click="showChart('co2')">
+                    <div class="inner" v-bind:class="{ open: currentChart === 'co2' }">
+                        <label class="label">CO2</label>
+                    </div>
                 </div>
-            </div>
 
-            <div class="outer" @click="showChart('pm')">
-                <div class="inner" v-bind:class="{ open: currentChart === 'pm' }">
-                    <label class="label">PM</label>
+                <div class="outer" @click="showChart('pm')">
+                    <div class="inner" v-bind:class="{ open: currentChart === 'pm' }">
+                        <label class="label">PM</label>
+                    </div>
                 </div>
-            </div>
 
-            <div class="outer" @click="showChart('atmo')">
-                <div class="inner" v-bind:class="{ open: currentChart === 'atmo' }">
-                    <label class="label_atmo">ATMO</label>
+                <div class="outer" @click="showChart('atmo')">
+                    <div class="inner" v-bind:class="{ open: currentChart === 'atmo' }">
+                        <label class="label_atmo">ATMO</label>
+                    </div>
                 </div>
-            </div>
 
+            </div>
+            <Co2Chart v-if="currentChart === 'co2'" />
+            <PmChart v-if="currentChart === 'pm'" />
+            <AtmoChart v-if="currentChart === 'atmo'" />
         </div>
-        <Co2Chart v-if="currentChart === 'co2'" />
-        <PmChart v-if="currentChart === 'pm'" />
-        <AtmoChart v-if="currentChart === 'atmo'" />
     </div>
 </template>
 
@@ -48,6 +51,9 @@ export default defineComponent({
         const router = useRouter();
         const touchStartX = ref(0);
         const touchEndX = ref(0);
+        const isMouseDown = ref(false);
+        const mouseXStart = ref(0);
+        const mouseXEnd = ref(0);
         const tour = ref<Shepherd.Tour | null>(null);
 
         onMounted(() => {
@@ -66,9 +72,23 @@ export default defineComponent({
             handleSwipeGesture();
         };
 
-        const handleSwipeGesture = () => {
+        const handleMouseDown = (e: MouseEvent) => {
+            isMouseDown.value = true;
+            mouseXStart.value = e.clientX;
+        };
+
+        const handleMouseUp = (e: MouseEvent) => {
+            if (!isMouseDown.value) return;
+            isMouseDown.value = false;
+            mouseXEnd.value = e.clientX;
+            handleSwipeGesture(true); // true für Maus-Event
+        };
+
+        const handleSwipeGesture = (isMouseEvent = false) => {
             const minSwipeDistance = 30;
-            if (touchStartX.value - touchEndX.value > minSwipeDistance) {
+            const start = isMouseEvent ? mouseXStart.value : touchStartX.value;
+            const end = isMouseEvent ? mouseXEnd.value : touchEndX.value;
+            if (start - end > minSwipeDistance) {
                 router.push({ name: 'Homepage' });
             }
         };
@@ -126,7 +146,9 @@ export default defineComponent({
             currentChart,
             showChart,
             handleTouchStart,
-            handleTouchEnd
+            handleTouchEnd,
+            handleMouseDown,
+            handleMouseUp
         }
     }
 });
@@ -143,7 +165,7 @@ export default defineComponent({
     display: flex;
     justify-content: space-between;
     width: 100%;
-    padding: 20px 0;
+    padding: 20px 20px;
 }
 
 .outer {
@@ -185,5 +207,10 @@ export default defineComponent({
     transition: all .3s ease-in;
     opacity: 1;
     cursor: pointer;
+}
+
+.page-container {
+    max-height: 75vh;
+    overflow-y: auto;
 }
 </style>
