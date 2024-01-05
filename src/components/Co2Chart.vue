@@ -93,6 +93,7 @@ import { Share } from '@capacitor/share';
 import { Filler, Chart as ChartJS, LineController, LineElement, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { useStore } from 'vuex';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import Shepherd from 'shepherd.js';
 
 ChartJS.register(Filler, LineController, LineElement, PointElement, LinearScale, Title, Tooltip, ChartDataLabels, Legend);
 
@@ -134,6 +135,7 @@ export default defineComponent({
         const isLoading = ref(true);
         const isError = ref(false);
         const noDataTimeout = ref<number | null>(null);
+        const tour = ref<Shepherd.Tour | null>(null);
 
         type Dataset = {
             label: string,
@@ -209,7 +211,104 @@ export default defineComponent({
             return (sum / values.length).toFixed(2); // 2 Nachkommastellen
         });
 
+        function initializeDiagramTutorial() {
+            tour.value = new Shepherd.Tour({
+                useModalOverlay: true,
+                defaultStepOptions: {
+                    classes: 'shadow-md bg-purple-dark',
+                    scrollTo: true
+                }
+            });
 
+            // Schritt 2: Auswahl der Unterkategorie
+            tour.value.addStep({
+                id: 'button-container',
+                classes: 'custom-shepherd-step',
+                text: `Hier können Sie zwischen den verschiedenen Messwerten umschalten.`,
+                attachTo: { element: '.button-container', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Weiter 2/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 3: Diagramm
+            tour.value.addStep({
+                id: 'chart-inner-container',
+                classes: 'custom-shepherd-step',
+                text: `Dies ist der Bereich, in dem das Diagramm angezeigt wird. Die Daten werden grafisch dargestellt, um Trends und Muster leichter erkennbar zu machen.`,
+                attachTo: { element: '.chart-inner-container', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Weiter 3/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 4: Info-Modal
+            tour.value.addStep({
+                id: 'info-modal',
+                classes: 'custom-shepherd-step',
+                text: `Klicken Sie auf dieses Symbol, um Informationen zu den jeweiligen Kategorien anzuzeigen.`,
+                attachTo: { element: '.fas.fa-info-circle.custom-icon', on: 'right' },
+                buttons: [
+                    {
+                        text: 'Weiter 4/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 5: Verbesserungs-Modal
+            tour.value.addStep({
+                id: 'settings-modal',
+                classes: 'custom-shepherd-step',
+                text: `Durch das Klicken auf dieses Symbol erhalten sie wertvolle Informationen, wie Sie Verbesserungen an diesem Wert erzielen können.`,
+                attachTo: { element: '.fas.fa-chart-line.custom-icon', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Weiter 5/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 6: Share-Modal
+            tour.value.addStep({
+                id: 'share-icon',
+                classes: 'custom-shepherd-step',
+                text: `Mit diesem Symbol können Sie die Daten exportieren oder teilen. Klicken Sie hier, um die aktuell angezeigten Daten als Datei herunterzuladen oder sie in sozialen Netzwerken zu teilen.`,
+                attachTo: { element: '.fas.fa-share-alt.custom-icon', on: 'left' },
+                buttons: [
+                    {
+                        text: 'Weiter 6/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 7: Average
+            tour.value.addStep({
+                id: 'average-value',
+                classes: 'custom-shepherd-step',
+                text: `Dies zeigt den Durchschnittswert der aktuellen Kategorie an. Es ist eine schnelle Möglichkeit, einen Überblick über die allgemeine Luftqualität zu bekommen.`,
+                attachTo: { element: '.average-value', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Fertig 7/7',
+                        action: () => {
+                            if (tour.value) {
+                                tour.value.complete();
+                                store.commit('SET_TUTORIAL_COMPLETED', true);
+                            }
+                        }
+                    }
+                ],
+            });
+        };
 
         onMounted(() => {
             // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
@@ -234,6 +333,14 @@ export default defineComponent({
             }
         }, { immediate: true });
 
+        watch(() => store.state.currentTutorialStep, (newStep) => {
+            if (newStep === 'CO2' && !store.state.tutorialCompleted) {
+                initializeDiagramTutorial();
+                if (tour.value) {
+                    tour.value.start();
+                }
+            }
+        });
 
         const chartOptions = computed(() => ({
             responsive: true,

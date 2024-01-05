@@ -96,8 +96,8 @@ export default defineComponent({
             text: 'Fertig 5/5',
             action: () => {
               if (tour.value) {
-                tour.value.complete();
-                store.commit('SET_TUTORIAL_COMPLETED', true);
+                tour.value.next();
+                store.commit('SET_CURRENT_TUTORIAL_STEP', 'dashboard');
               }
             }
           }

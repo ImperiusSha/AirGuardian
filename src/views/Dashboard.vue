@@ -27,11 +27,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, onMounted, ref, watch } from 'vue';
 import Co2Chart from '../components/Co2Chart.vue';
 import PmChart from '../components/PmChart.vue';
 import AtmoChart from '../components/AtmoChart.vue';
 import { useRouter } from 'vue-router';
+import Shepherd from 'shepherd.js';
+import store from '@/store';
 
 export default defineComponent({
     name: 'Dashboard',
@@ -46,6 +48,14 @@ export default defineComponent({
         const router = useRouter();
         const touchStartX = ref(0);
         const touchEndX = ref(0);
+        const tour = ref<Shepherd.Tour | null>(null);
+
+        onMounted(() => {
+            console.log(store.state.currentTutorialStep);
+            if (store.state.currentTutorialStep === 'dashboard') {
+                initializeDashboardTutorial();
+            }
+        });
 
         const handleTouchStart = (e: TouchEvent) => {
             touchStartX.value = e.touches[0].clientX;
@@ -57,7 +67,7 @@ export default defineComponent({
         };
 
         const handleSwipeGesture = () => {
-            const minSwipeDistance = 30; 
+            const minSwipeDistance = 30;
             if (touchStartX.value - touchEndX.value > minSwipeDistance) {
                 router.push({ name: 'Homepage' });
             }
@@ -68,6 +78,49 @@ export default defineComponent({
             window.localStorage.setItem('selectedChart', chart);
             console.log("Aktuelles Diagramm: " + currentChart.value);
         }
+
+        function initializeDashboardTutorial() {
+            tour.value = new Shepherd.Tour({
+                useModalOverlay: true,
+                defaultStepOptions: {
+                    classes: 'shadow-md bg-purple-dark',
+                    scrollTo: true
+                }
+            });
+
+            // Schritt 1: Auswahl der Kategorie
+            tour.value.addStep({
+                id: 'buttons',
+                classes: 'custom-shepherd-step',
+                text: `Diese Schaltfläche ermöglich es, zwischen den verschiedenen Kategorien zu wechseln.`,
+                attachTo: { element: '.buttons', on: 'bottom' },
+                buttons: [
+                    {
+                        text: 'Weiter 1/7',
+                        action: () => {
+                            if (tour.value) {
+                                tour.value.next();
+                                store.commit('SET_CURRENT_TUTORIAL_STEP', 'CO2');
+                            }
+                        }
+                    }
+                ],
+            });
+            if (tour.value) {
+                tour.value.start();
+            } else {
+                console.log('Tour wurde nicht initialisiert');
+            }
+        };
+
+        watch(() => store.state.currentTutorialStep, (newStep) => {
+            if (newStep === 'dashboard' && !store.state.tutorialCompleted) {
+                initializeDashboardTutorial();
+                if (tour.value) {
+                    tour.value.start();
+                }
+            }
+        });
 
         return {
             currentChart,
@@ -115,6 +168,7 @@ export default defineComponent({
     height: 100%;
     text-align: center;
 }
+
 .label {
     font-size: .7em;
     text-transform: uppercase;
