@@ -1,5 +1,5 @@
 import { BleClient, BleDevice, BleService } from '@capacitor-community/bluetooth-le';
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { useStore } from 'vuex';
 
 const CHARACTERISTICS = [
@@ -41,6 +41,31 @@ export function useBluetooth() {
         }
     };
 
+    const MAX_ATTEMPTS = 3;
+    const RETRY_INTERVAL = 5000;
+
+    const checkConnectionStatus = async () => {
+        let attempts = 0;
+    
+        while (attempts < MAX_ATTEMPTS && !isConnected.value) {
+            try {
+                await BleClient.readRssi(connectedDeviceId.value);
+                isConnected.value = true;
+                store.commit('showNotification', 'Verbindung erfolgreich wiederhergestellt.');
+                break; // Verbindung erfolgreich, Schleife beenden
+            } catch (error) {
+                attempts++;
+                if (attempts < MAX_ATTEMPTS) {
+                    await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
+                } else {
+                    isConnected.value = false;
+                    store.commit('showNotification', 'Verbindung endgültig getrennt.');
+                    store.commit('resetSensorValues');
+                }
+            }
+        }
+    };
+
     const connectToSensor = async (device: { deviceId: string; }) => {
         try {
             if (connectedDeviceId.value && connectedDeviceId.value !== device.deviceId) {
@@ -48,16 +73,16 @@ export function useBluetooth() {
             }
             await BleClient.stopLEScan();
             await BleClient.connect(device.deviceId);
-    
+
             // Abholen der vorhandenen Services
             const servicesFromDevice = await BleClient.getServices(device.deviceId);
-    
+
             // Nimmt den ersten Service, der nicht zu den generischen gehört ('0000')
             const customService = servicesFromDevice.find(service => !service.uuid.startsWith('0000'));
             if (!customService) {
                 throw new Error('Kein Custom Service gefunden.');
             }
-    
+
             // Abonniert die Benachrichtigungen für jede bekannte Charakteristik
             for (const charUuid of CHARACTERISTICS) {
                 try {
@@ -74,28 +99,37 @@ export function useBluetooth() {
                     console.error(`Fehler beim Abonnieren der Charakteristik ${charUuid}:`, error);
                 }
             }
-    
+
             isConnected.value = true;
             connectedDeviceId.value = device.deviceId;
+            store.commit('showNotification', 'Verbindung erfolgreich hergestellt.');
+
+            // Regelmäßige Überprüfung, ob die Verbindung noch besteht
+            setInterval(checkConnectionStatus, 30000); // Alle 30 Sekunden
         } catch (error) {
-            console.error('Verbindung fehlgeschlagen:', error);
+            store.commit('showNotification', 'Verbindung fehlgeschlagen: ' + error);
             isConnected.value = false;
             connectedDeviceId.value = '';
         }
     };
 
     const disconnectFromSensor = async () => {
-        if (connectedDeviceId.value) {
-            await BleClient.disconnect(connectedDeviceId.value);
-            isConnected.value = false;
-            connectedDeviceId.value = '';
-            store.commit('resetSensorValues');
+        try {
+            if (connectedDeviceId.value) {
+                await BleClient.disconnect(connectedDeviceId.value);
+                isConnected.value = false;
+                connectedDeviceId.value = '';
+                store.commit('showNotification', 'Verbindung getrennt.');
+                store.commit('resetSensorValues');
+            }
+        } catch (error) {
+            store.commit('showNotification', 'Fehler beim Trennen der Verbindung: ' + error);
         }
+
     };
 
     return { isConnected, connectToSensor, disconnectFromSensor, isBluetoothAvailable, availableDevices, scanForDevices, connectedDeviceId };
 }
-
 
 // Hilfsfunktion, um die Vuex-Mutation auf der Grundlage der Charakteristik-UUID zu bestimmen
 function getMutationForCharacteristic(uuid: string): string {

@@ -17,6 +17,11 @@ interface Cloud {
     id: number;
 }
 
+interface Notification {
+    message: string;
+    timestamp: string;
+}
+
 // Funktion, um Werte zu einem bestimmten Array hinzuzufügen und zu begrenzen
 function addToValues(state: any, key: string, value: number) {
     const values = state[key];
@@ -46,6 +51,7 @@ export default createStore({
         clouds: [] as Cloud[],
         tutorialCompleted: false,
         currentTutorialStep: 'app',
+        notifications: [] as Notification[],
     },
     mutations: {
         addCo2Value(state, value: number) {
@@ -85,6 +91,7 @@ export default createStore({
             state.tempValues = [];
             state.pressValues = [];
             state.humidValues = [];
+            state.notifications = [];
         },
         // Entfernt doppelt Einträge durch die Verwendung von new Set()
         // Filtert leere Werte durch die Verwendung von filter()
@@ -104,6 +111,16 @@ export default createStore({
                     (value) => value !== null && value !== undefined && value.toString() !== ''
                 );
             });
+        },
+        //Benachrichtigung über Verbindungsherstellung bzw. -trennung
+        showNotification(state, message) {
+            console.log("Vor der Aktualisierung:", state.notifications);
+            const newNotification = {
+                message: message,
+                timestamp: new Date().toISOString(),
+            };
+            state.notifications.push(newNotification);
+            console.log("Nach der Aktualisierung:", state.notifications);
         },
         SET_SENSOR_DATA(state, data) {
             state.sensorData = data;
@@ -138,6 +155,13 @@ export default createStore({
     getters: {
         sensorData: (state) => state.sensorData,
         clouds: (state) => state.clouds,
+        notifications: (state) => state.notifications,
+        latestNotification: state => {
+            if (state.notifications.length > 0) {
+                return state.notifications[state.notifications.length - 1];
+            }
+            return null;
+        },
     },
     modules: {},
 });

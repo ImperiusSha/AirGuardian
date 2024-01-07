@@ -9,8 +9,14 @@
         <ion-button fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
           @click="scanDevices"></ion-button>
       </div>
+      <!-- Darstellung der Wolken in der Navigationsleiste -->
       <div v-for="cloud in clouds" :key="cloud.id" class="cloud" :style="{ 'left': cloudPosition(cloud.id) + '%' }">
         <span class="cloud-value">{{ cloud.value }}</span>
+      </div>
+      <!-- Benachrichtigungen über Verbindung anzeigen -->
+      <div v-if="showNotificationBar && latestNotification"
+        :class="['notification-bar', getNotificationClass(latestNotification.message)]">
+        {{ latestNotification.message }}
       </div>
     </div>
     <!-- Ende der NavBar -->
@@ -30,7 +36,10 @@
               <span :class="{ 'connected-device-name': connectedDeviceId === device.deviceId }">
                 {{ device.name }}
               </span>
-              <button @click="toggleDeviceConnection(device)"
+              <span v-if="loadingStates[device.deviceId]">
+                <div class="loaderConnection"></div>
+              </span>
+              <button v-else @click="toggleDeviceConnection(device)"
                 :class="{ 'button-connected': connectedDeviceId === device.deviceId, 'button-disconnected': connectedDeviceId !== device.deviceId }"
                 :disabled="isConnected && connectedDeviceId !== device.deviceId">
                 {{ connectedDeviceId === device.deviceId ? 'Trennen' : 'Verbinden' }}
@@ -58,11 +67,18 @@ import useStatusIndicator from './composables/useStatusIndicator';
 import { useStore } from 'vuex';
 import Shepherd from 'shepherd.js';
 
+type LoadingStatesType = { [deviceId: string]: boolean };
+
 export default defineComponent({
   name: 'App',
   components: {
     IonButton,
     IonCheckbox
+  },
+  computed: {
+    latestNotification() {
+      return this.store.getters.latestNotification;
+    },
   },
   setup() {
     const router = useRouter();
@@ -75,6 +91,16 @@ export default defineComponent({
     const tour = ref<Shepherd.Tour | null>(null);
     const showDeviceModal = ref(false);
     const isFirefox = ref(false);
+    const loadingStates = ref<LoadingStatesType>({});
+    const showNotificationBar = ref(false);
+    const getNotificationClass = (message: string | string[]) => {
+      if (message.includes('erfolgreich')) {
+        return 'notification-bar-success';
+      } else if (message.includes('getrennt') || message.includes('fehlgeschlagen')) {
+        return 'notification-bar-failure';
+      }
+      return '';
+    };
 
     // Überprüft, ob es sich um Firefox handelt
     const checkBrowser = () => {
@@ -94,6 +120,7 @@ export default defineComponent({
         store.dispatch('createCloudWithValue', { type: 'co2', value: latestValue.value });
       }
     }, { deep: true });
+
 
     // Methode zum Initialisieren des Tutorials
     const initializeTutorial = () => {
@@ -163,6 +190,25 @@ export default defineComponent({
       }
     };
 
+    watch(() => store.getters.latestNotification, (newNotification) => {
+      if (newNotification && store.getters.notifications.length > 0) {
+        showNotificationBar.value = true;
+
+        setTimeout(() => {
+          const notificationElement = document.querySelector('.notification-bar');
+          if (notificationElement) {
+            notificationElement.classList.add('notification-bar-hide');
+          }
+          setTimeout(() => {
+            showNotificationBar.value = false;
+            if (notificationElement) {
+              notificationElement.classList.remove('notification-bar-hide');
+            }
+          }, 1000); // Wartezeit für die Ausblend-Animation
+        }, 3000); // Anzeigedauer der Benachrichtigungsleiste
+      }
+    }, { immediate: true });
+
     onMounted(() => {
       checkBrowser();
       if (!store.state.tutorialCompleted && store.state.currentTutorialStep === 'app') {
@@ -205,14 +251,14 @@ export default defineComponent({
       }
     };
 
-    const connectToSensorBox = () => {
-      showModal.value = false;
-      if (!isConnected.value) {
-        showDeviceModal.value = true;
-      } else {
-        disconnectFromSensor();
-      }
-    };
+    // const connectToSensorBox = () => {
+    //   showModal.value = false;
+    //   if (!isConnected.value) {
+    //     showDeviceModal.value = true;
+    //   } else {
+    //     disconnectFromSensor();
+    //   }
+    // };
 
     const scanDevices = () => {
       checkBrowser();
@@ -225,14 +271,15 @@ export default defineComponent({
       }
     };
 
-    const toggleDeviceConnection = (device: { deviceId: any; }) => {
+    const toggleDeviceConnection = async (device: { deviceId: any; }) => {
       if (connectedDeviceId.value === device.deviceId) {
         disconnectFromSensor();
       } else if (!isConnected.value) {
-        connectToSensor(device);
+        loadingStates.value[device.deviceId] = true;
+        await connectToSensor(device);
+        loadingStates.value[device.deviceId] = false;
       }
     };
-
 
     watch(isConnected, (newVal) => {
       if (!newVal) {
@@ -243,7 +290,7 @@ export default defineComponent({
     return {
       isConnected,
       showModal,
-      connectToSensorBox,
+      // connectToSensorBox,
       isConnectedIndicator,
       goToDashboard,
       goToHomePage,
@@ -261,7 +308,11 @@ export default defineComponent({
       connectedDeviceId,
       disconnectFromSensor,
       toggleDeviceConnection,
-      isFirefox
+      isFirefox,
+      loadingStates,
+      store,
+      showNotificationBar,
+      getNotificationClass
     };
   },
 });
@@ -275,6 +326,13 @@ export default defineComponent({
 #diagramButton {
   top: 0;
   left: 0;
+}
+
+.device-entry {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 10px;
 }
 
 /* Responsive Styles */
@@ -411,6 +469,39 @@ h2 {
   height: 20px;
   background-size: contain;
   transform: scale(0.8);
+}
+
+/* Navigationsleiste für Verbindungsstatus */
+.notification-bar-success {
+  background-color: #90ee90;
+  color: black;
+  padding: 10px;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: opacity 1s ease-in-out;
+  opacity: 1;
+}
+
+.notification-bar-failure {
+  background-color: #ffa07f;
+  color: black;
+  padding: 10px;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100000000;
+  transition: opacity 1s ease-in-out;
+  opacity: 1;
+}
+
+.notification-bar-hide {
+  opacity: 0;
 }
 
 @keyframes moveCloud {

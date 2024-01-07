@@ -25,6 +25,18 @@
     border: 8px solid #f3f3f3;
     border-top: 8px solid rgb(83, 140, 204);
     border-radius: 50%;
+    margin-left: 10px;
+    width: 40px;
+    height: 40px;
+    scale: 0.7;
+    animation: rotate 2s linear infinite;
+  }
+
+  .loaderConnection {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid rgb(83, 140, 204);
+    border-radius: 50%;
+    margin-right: 25px;
     width: 50px;
     height: 50px;
     scale: 0.7;
@@ -175,13 +187,11 @@
     opacity: 50%;
   }
 
-
-
   /* Sensorbox Selection */
   .button-container-selection, .modal-footer button {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .button-container-selection button,
@@ -196,6 +206,10 @@
       transition: all 0.3s ease-in-out;
       cursor: pointer;
       font-weight: bold;
+      white-space: nowrap;
+      min-width: 100px;
+      max-width: 100px;
+      height: 40px;
   }
   
   .button-container-selection button::before,
@@ -253,6 +267,7 @@
   .connected-device-name {
     font-size: 1.2em;
     font-weight: bold;
+    flex-grow: 1;
   }
 
   
