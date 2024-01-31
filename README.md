@@ -35,7 +35,7 @@ Install Node.js, Ionic, and Vue.js on your system.
 ## **Mobile Installation and Testing**
 **Prerequisites for Mobile**
 
-Install the Ionic CLI and Cordova globally: `npm install -g ionic capacitor`.
+Install the Ionic CLI and Capacitor globally: `npm install -g ionic capacitor`.
 Set up a development environment for Android/iOS.
 
 **Installation and Testing on Mobile Devices**
