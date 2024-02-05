@@ -8,6 +8,9 @@ WORKDIR /work
 RUN npm install -g @ionic/cli
 RUN npm install
 
+# Install test dependencies
+RUN npm install --save-dev vitest vue-test-utils
+
 # Build app
 RUN ionic build
 
