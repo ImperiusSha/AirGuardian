@@ -341,7 +341,7 @@ export default defineComponent({
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'µg/m³',
+                        text: 'PM in [µg/m³]',
                         font: {
                             size: 16,
                             weight: 500
