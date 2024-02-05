@@ -5,8 +5,17 @@ services:
   # AirGuardian APP
   app:
     build: .
-    # Mount workdir to cache node modules 
-    volumes:
-      - $PWD:/work
+    ports:
+      - 8060:8060
+    command: ["ionic", "serve", "--host=0.0.0.0", "--port=8060"]
+
+  # HTTPD Proxy Forward
+  web:
+    image: httpd
     ports:
       - 8100:8100
+    volumes:
+      - $PWD/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+      - $PWD/localhost.crt:/usr/local/apache2/conf/localhost.crt:ro
+      - $PWD/localhost.key:/usr/local/apache2/conf/localhost.key:ro
+

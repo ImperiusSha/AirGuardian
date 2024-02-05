@@ -37,15 +37,39 @@
                         Kopfschmerzen, Schläfrigkeit und mangelnde Konzentration können auftreten.</p>
                 </div>
             </div>
-            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
             <button class="custom-icon-button" @click="showSettingsModal = true">
-                <i class="fas fa-cog custom-icon"></i>
+                <i class="fas fa-chart-line custom-icon"></i>
             </button>
-            <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeModals">
-                <div class="modal-content settings-modal-content" @click.stop>
+            <div v-if="showSettingsModal" class="modal info-modal" @click.self="closeModals">
+                <div class="info-modal-content" @click.stop>
                     <span class="close-button" @click="showSettingsModal = false">&times;</span>
+                    <h2>Möglichkeit zur Verbesserung von CO2-Werten</h2>
+                    <p>Die Reduzierung der CO2-Werte erfordert umweltfreundliche Lebensstilentscheidungen, Energieeffizien,
+                        erneuerbare Energien und nachhaltige Verkehrsoptionen, um den Ausstoß von Treibhausgasen zu
+                        verringern.
+                    </p>
+                    <h3>Drinnen</h3>
+                    <p><b>Luftreiniger:</b> Einige Luftreiniger sind mit speziellen CO2-Filtern ausgestattet,
+                        die dazu beitragen können, die CO2-Konzentration in Innenräumen zu senken.</p>
+                    <p><b>Lüften:</b> Öffnen Sie regelmäßig Fenster und Türen, um frische Luft hereinzulassen und CO2
+                        aus dem Raum abzuführen. Dies ist besonders wichtig in schlecht belüfteten Räumen.</p>
+                    <p><b>Energiesparmaßnamen: </b>Durch die Verbesserung der Energieeffizienz in Ihrem Zuhause können Sie
+                        den Bedarf
+                        an Heizung oder Klimatisierung reduzieren, was wiederum den CO2-Ausstoß senken kann.</p>
+                    <p><b>Pflanzen:</b> Zimmerpflanzen können CO2 aufnehmen und Sauerstoff abgeben.
+                        Das Platzieren von Pflanzen in Innenräumen kann zur Verbesserung der Luftqualität beitragen.</p>
+                    <h3>Draußen</h3>
+                    <p><b>Verkehr reduzieren:</b> Nutzen Sie öffentliche Verkehrsmittel, um den Autoverkehr und die damit
+                        verbundenen
+                        Abgasemissionen zu reduzieren.</p>
+                    <p><b>Elektrische Fahrzeuge:</b> Wenn Sie ein Auto benötigen, erwägen Sie den Umstieg auf ein
+                        Elektrofahrzeug
+                        oder ein Hybridfahrzeug, um die CO2-Emissionen zu verringern.</p>
+                    <p><b>Erneuerbare Energien:</b> Unterstützen Sie erneuerbare Energiequellen wie Solarenergie und
+                        Windenergie, um den CO2-Ausstoß im Zusammenhang mit der Stromerzeugung zu minimieren.</p>
                 </div>
             </div>
+            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
         </div>
         <p class="average-value">
             <span v-if="isLoading">
@@ -69,6 +93,7 @@ import { Share } from '@capacitor/share';
 import { Filler, Chart as ChartJS, LineController, LineElement, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { useStore } from 'vuex';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import Shepherd from 'shepherd.js';
 
 ChartJS.register(Filler, LineController, LineElement, PointElement, LinearScale, Title, Tooltip, ChartDataLabels, Legend);
 
@@ -110,6 +135,7 @@ export default defineComponent({
         const isLoading = ref(true);
         const isError = ref(false);
         const noDataTimeout = ref<number | null>(null);
+        const tour = ref<Shepherd.Tour | null>(null);
 
         type Dataset = {
             label: string,
@@ -133,9 +159,6 @@ export default defineComponent({
         });
 
         const initializeChartData = () => {
-            // Leert die Datasets
-            // chartData.value.datasets = [];
-
             // Wählt die Daten basierend auf dem ausgewählten CO2-Wert
             const data = selectedCO2.value === 'CO2' ? store.state.co2Values : store.state.temp_co2Values;
 
@@ -185,7 +208,104 @@ export default defineComponent({
             return (sum / values.length).toFixed(2); // 2 Nachkommastellen
         });
 
+        function initializeDiagramTutorial() {
+            tour.value = new Shepherd.Tour({
+                useModalOverlay: true,
+                defaultStepOptions: {
+                    classes: 'shadow-md bg-purple-dark',
+                    scrollTo: true
+                }
+            });
 
+            // Schritt 2: Auswahl der Unterkategorie
+            tour.value.addStep({
+                id: 'button-container',
+                classes: 'custom-shepherd-step',
+                text: `Hier können Sie zwischen den verschiedenen Messwerten umschalten.`,
+                attachTo: { element: '.button-container', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Weiter 2/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 3: Diagramm
+            tour.value.addStep({
+                id: 'chart-inner-container',
+                classes: 'custom-shepherd-step',
+                text: `Dies ist der Bereich, in dem das Diagramm angezeigt wird. Die Daten werden grafisch dargestellt, um Trends und Muster leichter erkennbar zu machen.`,
+                attachTo: { element: '.chart-inner-container', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Weiter 3/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 4: Info-Modal
+            tour.value.addStep({
+                id: 'info-modal',
+                classes: 'custom-shepherd-step',
+                text: `Klicken Sie auf dieses Symbol, um Informationen zu den jeweiligen Kategorien anzuzeigen.`,
+                attachTo: { element: '.fas.fa-info-circle.custom-icon', on: 'right' },
+                buttons: [
+                    {
+                        text: 'Weiter 4/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 5: Verbesserungs-Modal
+            tour.value.addStep({
+                id: 'settings-modal',
+                classes: 'custom-shepherd-step',
+                text: `Durch das Klicken auf dieses Symbol erhalten sie wertvolle Informationen, wie Sie Verbesserungen an diesem Wert erzielen können.`,
+                attachTo: { element: '.fas.fa-chart-line.custom-icon', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Weiter 5/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 6: Share-Modal
+            tour.value.addStep({
+                id: 'share-icon',
+                classes: 'custom-shepherd-step',
+                text: `Mit diesem Symbol können Sie die Daten exportieren oder teilen. Klicken Sie hier, um die aktuell angezeigten Daten als Datei herunterzuladen oder sie in sozialen Netzwerken zu teilen.`,
+                attachTo: { element: '.fas.fa-share-alt.custom-icon', on: 'left' },
+                buttons: [
+                    {
+                        text: 'Weiter 6/7',
+                        action: tour.value.next
+                    }
+                ],
+            });
+
+            // Schritt 7: Average
+            tour.value.addStep({
+                id: 'average-value',
+                classes: 'custom-shepherd-step',
+                text: `Dies zeigt den Durchschnittswert der aktuellen Kategorie an. Es ist eine schnelle Möglichkeit, einen Überblick über die allgemeine Luftqualität zu bekommen.`,
+                attachTo: { element: '.average-value', on: 'top' },
+                buttons: [
+                    {
+                        text: 'Fertig 7/7',
+                        action: () => {
+                            if (tour.value) {
+                                tour.value.complete();
+                                store.commit('SET_TUTORIAL_COMPLETED', true);
+                            }
+                        }
+                    }
+                ],
+            });
+        };
 
         onMounted(() => {
             // Setze einen Timeout, um den Fehlerzustand zu setzen, wenn die Daten nicht in einer bestimmten Zeit geladen wurden
@@ -210,6 +330,14 @@ export default defineComponent({
             }
         }, { immediate: true });
 
+        watch(() => store.state.currentTutorialStep, (newStep) => {
+            if (newStep === 'CO2' && !store.state.tutorialCompleted) {
+                initializeDiagramTutorial();
+                if (tour.value) {
+                    tour.value.start();
+                }
+            }
+        });
 
         const chartOptions = computed(() => ({
             responsive: true,
@@ -292,7 +420,7 @@ export default defineComponent({
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'ppm',
+                        text: 'CO₂ in [ppm]',
                         font: {
                             size: 16,
                             weight: 500

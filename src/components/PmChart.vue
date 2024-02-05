@@ -65,15 +65,40 @@
                         ist wahrscheinlich betroffen.</p>
                 </div>
             </div>
-            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
             <button class="custom-icon-button" @click="showSettingsModal = true">
-                <i class="fas fa-cog custom-icon"></i>
+                <i class="fas fa-chart-line custom-icon"></i>
             </button>
-            <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeModals">
-                <div class="modal-content settings-modal-content" @click.stop>
+            <div v-if="showSettingsModal" class="modal info-modal" @click.self="closeModals">
+                <div class="settings-modal-content" @click.stop>
                     <span class="close-button" @click="showSettingsModal = false">&times;</span>
+                    <h2>Möglichkeit zur Verbesserung von PM-Werten</h2>
+                    <p>Die Verbesserung der PM-Werte erfordert eine Kombination aus individuellem Handeln
+                        und kollektiven Anstrengungen auf gesellschaftlicher Ebene.</p>
+                    <h3>Drinnen</h3>
+                    <p><b>Luftreiniger:</b> Hochwertige Luftreiniger mit HEPA-Filtern sind in der Lage, die Partikel aus der
+                        Raumluft
+                        zu entfernen.</p>
+                    <p><b>Lüften:</b> Regelmäßiges Lüften fördert die Raumluftzirkulation und hilft beim entfernen der
+                        Partikel durch
+                        Frischluft.</p>
+                    <p><b>Rauchverbot: </b>Vermeiden Sie Rauchen bzw. Raucherbereiche, da Tabakrauch ebenfalls Partikel in
+                        der Luft
+                        freisetzt.</p>
+                    <p><b>Kochabluft:</b> Wenn möglich verwenden Sie die Dunstabzugshaube beim Kochen, um die Partikel aus
+                        der Luft zu beseitigen.</p>
+                    <p><b>Pflanzen:</b> Bestimme Zimmerpflanzen, wie beispielsweise Bambuspalmen oder Gummibäume, können
+                        dazu beitragen, die
+                        Luftqualität zu verbessern.</p>
+                    <h3>Draußen</h3>
+                    <p><b>Verkehr reduzieren:</b> Nutzen Sie öffentliche Verkehrsmittel, um den Autoverkehr und die damit
+                        verbundenen 
+                        Abgasemissionen zu reduzieren.</p>
+                    <p><b>Fahrzeugwartung:</b> Stellen Sie sicher, dass ihr Fahrzeug in einem guten Zustand ist, um
+                        Emissionen zu minimieren.</p>
+                    <p><b>Bäume und Grünflächen:</b> Grünflächen filtern die Partikel aus der Luft.</p>
                 </div>
             </div>
+            <i @click.stop="exportData" class="fas fa-share-alt custom-icon"></i>
         </div>
         <p class="average-value">
             <span v-if="isLoading">
@@ -119,7 +144,6 @@ export default defineComponent({
     // Ermöglicht die automatische Aktualisierung des Diagrammes bei Änderungen der Werte
     // eines Objektes, da dieses reaktiv gemacht wurde
     setup() {
-        console.log("Im Setup von defineComponent_PMChart angekommen.");
         const store = useStore();
         const showChart = ref(true);
         const maxY = ref(50);
@@ -129,6 +153,7 @@ export default defineComponent({
         const selectedPM = ref('PM10');
         const chartTitle = computed(() => `${selectedPM.value}-Diagramm`);
         const closeModals = () => {
+            console.log("Test123");
             showInfoModal.value = false;
             showSettingsModal.value = false;
         };
@@ -316,7 +341,7 @@ export default defineComponent({
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'µg/m³',
+                        text: 'PM in [µg/m³]',
                         font: {
                             size: 16,
                             weight: 500
@@ -354,6 +379,8 @@ export default defineComponent({
                 },
             },
         }));
+
+        const reactiveChartOptions = computed(() => chartOptions);
 
         const exportData = async function () {
             const data = chartData.value.datasets[0].data;
@@ -410,13 +437,14 @@ export default defineComponent({
             shareOutline,
             isActive,
             isLoading,
-            isError
+            isError,
+            reactiveChartOptions
         };
     }
 })
 </script>
 
-<style>
+<style scoped>
 @import "@/assets/SharedStyles.css";
 
 .chart-inner-container {

@@ -16,5 +16,6 @@ services:
       - 8100:8100
     volumes:
       - $PWD/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
-      #TODO: Insert SSL Keys
+      - $PWD/localhost.crt:/usr/local/apache2/conf/localhost.crt:ro
+      - $PWD/localhost.key:/usr/local/apache2/conf/localhost.key:ro
 

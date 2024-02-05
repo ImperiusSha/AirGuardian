@@ -2,19 +2,30 @@
 
 import { createStore } from 'vuex'
 
-interface SensorDataPoint {
+export interface SensorDataPoint {
     timestamp: string;
     location: {
         lat: number;
         lng: number;
     };
-    value?: number;
+    values: {
+        co2: number;
+        pm10: number;
+        pm25: number;
+        temp: number;
+        humidity: number;
+    };
 }
 
 interface Cloud {
     type: string;
     value: number;
     id: number;
+}
+
+interface Notification {
+    message: string;
+    timestamp: string;
 }
 
 // Funktion, um Werte zu einem bestimmten Array hinzuzufügen und zu begrenzen
@@ -25,6 +36,7 @@ function addToValues(state: any, key: string, value: number) {
             timestamp: new Date().toISOString(),
             value: value,
         });
+        // Begrenzung kann wenn nötig entfernt werden -> benötigt skalierende/zoombare Diagramme
         if (values.length > 10) {
             values.shift();
         }
@@ -33,6 +45,7 @@ function addToValues(state: any, key: string, value: number) {
 
 
 export default createStore({
+    // Dient der Datenverwaltung, kann nur von Mutations beeinflusst werden
     state: {
         co2Values: [] as { timestamp: string, value: number }[],
         temp_co2Values: [] as { timestamp: string, value: number }[],
@@ -46,7 +59,9 @@ export default createStore({
         clouds: [] as Cloud[],
         tutorialCompleted: false,
         currentTutorialStep: 'app',
+        notifications: [] as Notification[],
     },
+    // Synchrone Methoden, die genau beeinflussen, wie ein State bearbeitet werden soll
     mutations: {
         addCo2Value(state, value: number) {
             addToValues(state, 'co2Values', value);
@@ -85,6 +100,7 @@ export default createStore({
             state.tempValues = [];
             state.pressValues = [];
             state.humidValues = [];
+            state.notifications = [];
         },
         // Entfernt doppelt Einträge durch die Verwendung von new Set()
         // Filtert leere Werte durch die Verwendung von filter()
@@ -105,12 +121,34 @@ export default createStore({
                 );
             });
         },
+        //Benachrichtigung über Verbindungsherstellung bzw. -trennung
+        showNotification(state, message) {
+            console.log("Vor der Aktualisierung:", state.notifications);
+            const newNotification = {
+                message: message,
+                timestamp: new Date().toISOString(),
+            };
+            state.notifications.push(newNotification);
+            console.log("Nach der Aktualisierung:", state.notifications);
+        },
         SET_SENSOR_DATA(state, data) {
             state.sensorData = data;
         },
-        ADD_LOCATION_AND_DATA(state, payload) {
-            state.sensorData.push(payload);
+        ADD_LOCATION_AND_DATA(state, { location, values }) {
+            const existingPoint = state.sensorData.find(p => p.location.lat === location.lat && p.location.lng === location.lng);
+            if (existingPoint) {
+                // Aktualisieren der Werte für den existierenden Standort
+                existingPoint.values = values;
+            } else {
+                // Hinzufügen eines neuen SensorDataPoints
+                state.sensorData.push({
+                    timestamp: new Date().toISOString(),
+                    location,
+                    values,
+                });
+            }
         },
+        
         CREATE_CLOUD_WITH_VALUE(state, payload: Cloud) {
             if (!state.clouds.length || state.clouds[state.clouds.length - 1].value !== payload.value) {
                 state.clouds.push(payload);
@@ -123,6 +161,7 @@ export default createStore({
             state.currentTutorialStep = step;
         },
     },
+    // (Koennen) Asynchrone Aufrufe von (mehreren) Mutations durchführen
     actions: {
         addLocationAndData({ commit }, payload) {
             commit('ADD_LOCATION_AND_DATA', payload);
@@ -135,9 +174,47 @@ export default createStore({
             commit('SET_CURRENT_TUTORIAL_STEP', 'app');
         },
     },
+    // Dienen zum Abrufen der Werte aus dem State
     getters: {
         sensorData: (state) => state.sensorData,
         clouds: (state) => state.clouds,
+        notifications: (state) => state.notifications,
+        latestNotification: state => {
+            if (state.notifications.length > 0) {
+                return state.notifications[state.notifications.length - 1];
+            }
+            return null;
+        },
+        latestCo2Value: (state) => {
+            if (state.co2Values.length > 0) {
+                return state.co2Values[state.co2Values.length - 1].value;
+            }
+            return null;
+        },
+        lastestPM10Value: (state) => {
+            if (state.pm10Values.length > 0) {
+                return state.pm10Values[state.pm10Values.length - 1].value;
+            }
+            return null;
+        },
+        latestPM25Value: (state) => {
+            if (state.pm25Values.length > 0) {
+                return state.pm25Values[state.pm25Values.length - 1].value;
+            }
+            return null;
+        },
+        latestTempValue: (state) => {
+            if (state.tempValues.length > 0) {
+                return state.tempValues[state.tempValues.length - 1].value;
+            }
+            return null;
+        },
+        latestHumidityValue: (state) => {
+            if (state.humidValues.length > 0) {
+                return state.humidValues[state.humidValues.length - 1].value;
+            }
+            return null;
+        },
     },
     modules: {},
 });
