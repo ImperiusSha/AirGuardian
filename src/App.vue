@@ -4,9 +4,8 @@
     <div class="navbar">
       <!-- <div class="cloud"></div> -->
       <div class="navbar-content">
-        <input type="checkbox" id="checkbox2" class="checkbox2 visuallyHidden" v-model="menuOpen">
         <h1 class="navbar-title" @click="restartTutorial">Air Guardian</h1>
-        <ion-button fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
+        <ion-button aria-label="Status Indikator" fill="clear" id="statusIndicator" :class="{ 'status-indicator': true, 'is-connected': isConnected }"
           @click="scanDevices"></ion-button>
       </div>
       <!-- Darstellung der Wolken in der Navigationsleiste -->
@@ -137,7 +136,7 @@ export default defineComponent({
         id: 'status-indicator',
         classes: 'custom-shepherd-step',
         text: `
-    <div class="tutorial-status-indicator">
+    <div class="tutorial-status-indicator" role="dialog" aria-labelledby="statusIndicatorLabel">
       Das ist der Statusindikator. Er zeigt dir an, ob eine Verbindung zur Sensorbox besteht.
       <br>
       <img class="status-indicator-img" src="images/statusIndicatorAn.png" alt="Verbindung hergestellt">Verbindung hergestellt</img>
@@ -159,7 +158,7 @@ export default defineComponent({
         id: 'navbar',
         classes: 'custom-shepherd-step',
         text: `
-    <div class="tutorial-cloud">
+    <div class="tutorial-cloud" role="dialog" aria-labelledby="navbarLabel">
       In der Navigationsleiste erscheinen zwischendurch kleine Wölkchen, die neue CO2-Werte anzeigen.
       <br>
       <img class="status-indicator-img" src="images/clouds.png" alt="Tutorial Cloud"></img>
@@ -330,8 +329,8 @@ export default defineComponent({
 
 .device-entry {
   display: flex;
-  justify-content: space-between; 
-  align-items: center; 
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
 }
 

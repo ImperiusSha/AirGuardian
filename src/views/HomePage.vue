@@ -30,6 +30,10 @@ export default defineComponent({
     const tour = ref<Shepherd.Tour | null>(null);
 
     onMounted(() => {
+      const metaDescription = document.createElement('meta');
+      metaDescription.name = 'description';
+      metaDescription.content = 'Willkommen bei Air Guardian, Ihrer Anlaufstelle für Echtzeit-Luftqualitätsüberwachung. Behalten Sie die Luftqualität in Ihrer Umgebung im Blick und schützen Sie Ihre Gesundheit.';
+      document.head.appendChild(metaDescription);
       if (!tour.value && store.state.currentTutorialStep === 'homepage' && !store.state.tutorialCompleted) {
         initializeHomePageTutorial();
       }
@@ -48,11 +52,11 @@ export default defineComponent({
       tour.value.addStep({
         id: 'background',
         text: `
-        <div class="tutorial-background">
+        <div class="tutorial-background" role="dialog" aria-labelledby="backgroundLabel">
           <span>Der Hintergrund passt sich dynamisch an deine Umgebungsverhältnisse an.</span>
-          <img class="background-good" src="src/assets/GuteLuft.gif" alt="Gute Luft">
-          <img class="background-medium" src="src/assets/MaeßigeLuft.gif" alt="Mäßige Luft">
-          <img class="background-bad" src="src/assets/SchlechteLuft.gif" alt="Schlechte Luft">
+          <img class="background-good" src="images/GuteLuft.png" alt="Gute Luft"></img>
+          <img class="background-medium" src="images/MaessigeLuft.png" alt="Mäßige Luft"></img>
+          <img class="background-bad" src="images/SchlechteLuft.png" alt="Schlechte Luft"></img>
         </div>`
         ,
         attachTo: { element: '.background', on: 'bottom' },
@@ -68,13 +72,12 @@ export default defineComponent({
       tour.value.addStep({
         id: 'swipe-navigation',
         text: `
-    <div class="tutorial-swipe-right">
+    <div class="tutorial-swipe-right" role="dialog" aria-labelledby="swipeRightDialogLabel">
       <span>Wische nach rechts, um zu den Diagrammen zu gelangen.</span>
       <br>
       <img class="swipe-gif" src="images/swipe.gif" alt="Swipe Right"></img>
     </div>
     `,
-        attachTo: { element: '.swipe-area', on: 'bottom' },
         buttons: [
           {
             text: 'Weiter 4/5',
@@ -87,13 +90,12 @@ export default defineComponent({
       tour.value.addStep({
         id: 'swipe-navigation-left',
         text: `
-              <div class="tutorial-swipe-left">
+              <div class="tutorial-swipe-left" role="dialog" aria-labelledby="swipeLeftDialogLabel">
                   <span>Wische nach links, um zur Karte zu gelangen.</span>
                   <br>
                   <img class="swipe-gif" src="images/swipe-left.gif" alt="Swipe Left"></img>
               </div>
             `,
-        attachTo: { element: '.swipe-area', on: 'bottom' },
         buttons: [
           {
             text: 'Fertig 5/5',

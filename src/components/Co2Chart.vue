@@ -159,9 +159,6 @@ export default defineComponent({
         });
 
         const initializeChartData = () => {
-            // Leert die Datasets
-            // chartData.value.datasets = [];
-
             // Wählt die Daten basierend auf dem ausgewählten CO2-Wert
             const data = selectedCO2.value === 'CO2' ? store.state.co2Values : store.state.temp_co2Values;
 
@@ -423,7 +420,7 @@ export default defineComponent({
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'ppm',
+                        text: 'CO₂ in [ppm]',
                         font: {
                             size: 16,
                             weight: 500

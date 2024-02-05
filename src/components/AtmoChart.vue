@@ -266,19 +266,19 @@ export default defineComponent({
                     return {
                         min: -20,
                         max: 50,
-                        title: 'Temperatur (°C)'
+                        title: 'Temperatur in [°C]'
                     };
                 case 'HUMID':
                     return {
                         min: 0,
                         max: 100,
-                        title: 'Luftfeuchtigkeit (%)'
+                        title: 'Luftfeuchtigkeit in [%]'
                     };
                 case 'PRESS':
                     return {
                         min: 950,
                         max: 1050,
-                        title: 'Druck (hPa)'
+                        title: 'Druck in [hPa]'
                     };
                 default:
                     return {
