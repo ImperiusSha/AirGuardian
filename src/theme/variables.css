@@ -12,8 +12,8 @@ http://ionicframework.com/docs/theming/ */
 }
 
 .status-indicator.is-connected {
-  background-color: rgb(229, 225, 3);
-  border: 3px solid rgb(255, 238, 0); 
+  background-color: rgb(51, 211, 3);
+  border: 3px solid rgb(74, 223, 0); 
   animation: pulse 3s infinite;
 }
 
