@@ -1,8 +1,8 @@
-# **AirGuardian (SensIT)**
+# **AirGuardian**
 
 ## **Project Overview**
 
-AirGuardian (SensIT) is an innovative application for monitoring air quality. It provides real-time information on CO2 levels, PM10/PM2.5 values, and other key air quality indicators. With a reactive homepage animation and the ability to export data, AirGuardian is an indispensable tool for those who are environmentally conscious.
+AirGuardian is an innovative application for monitoring air quality. It provides real-time information on CO2 levels, PM10/PM2.5 values, and other key air quality indicators. With a reactive homepage animation and the ability to export data, AirGuardian is an indispensable tool for those who are environmentally conscious.
 
 ## **Screenshots**
 
